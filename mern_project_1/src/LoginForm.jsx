@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './App.css';
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -24,9 +23,12 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="wrapper">
-      <form onSubmit={handleSubmit} className="login-form">
-        <h2>Login</h2>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-[#111] p-8 rounded-lg shadow-lg w-72 flex flex-col"
+      >
+        <h2 className="text-center text-white text-2xl mb-5">Login</h2>
         <input
           type="text"
           name="username"
@@ -34,6 +36,7 @@ const LoginForm = () => {
           value={formData.username}
           onChange={handleChange}
           required
+          className="mb-4 p-2 text-sm border border-gray-800 rounded bg-black text-white placeholder-gray-500"
         />
         <input
           type="password"
@@ -42,9 +45,17 @@ const LoginForm = () => {
           value={formData.password}
           onChange={handleChange}
           required
+          className="mb-4 p-2 text-sm border border-gray-800 rounded bg-black text-white placeholder-gray-500"
         />
-        <button type="submit">Login</button>
-        {message && <p className="message">{message}</p>}
+        <button
+          type="submit"
+          className="p-2 text-base bg-white text-black rounded hover:bg-gray-300 transition"
+        >
+          Login
+        </button>
+        {message && (
+          <p className="text-center mt-4 text-sm">{message}</p>
+        )}
       </form>
     </div>
   );
