@@ -11,18 +11,47 @@ const Login = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setError('');
 
-    const envUsername = import.meta.env.VITE_LOGIN_USERNAME;
-    const envPassword = import.meta.env.VITE_LOGIN_PASSWORD;
+  const trimmedUsername = form.username.trim();
+  const trimmedPassword = form.password.trim();
 
-    if (form.username === envUsername && form.password === envPassword) {
-      navigate('/');
-    } else {
-      setError('Invalid username or password');
-    }
-  };
+  if (!trimmedUsername && !trimmedPassword) {
+    setError('Both fields are required');
+    return;
+  }
+  if (!trimmedUsername) {
+    setError('UserName is required');
+    return;
+  }
+  if (!trimmedPassword) {
+    setError('Password is required');
+    return;
+  }
 
+  if (trimmedUsername.length < 3) {
+    setError('Username must be at least 3 characters');
+    return;
+  }
+
+  if (trimmedPassword.length < 6) {
+    setError('Password must be at least 6 characters');
+    return;
+  }
+
+  const envUsername = import.meta.env.VITE_LOGIN_USERNAME;
+  const envPassword = import.meta.env.VITE_LOGIN_PASSWORD;
+
+  if (
+    trimmedUsername === envUsername &&
+    trimmedPassword === envPassword
+  ) {
+    navigate('/');
+  } else {
+    setError('Invalid username or password');
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-cover bg-center bg-no-repeat h-screen w-screen" >
       <div className="bg-white/50 shadow-xl/30  backdrop-blur-sm p-6 rounded-lg w-full max-w-sm hover:bg-white/100">
@@ -37,7 +66,6 @@ const Login = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="UserName"
-              required
             />
           </div>
           <div>
@@ -49,7 +77,6 @@ const Login = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
-              required
             />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
