@@ -1,11 +1,15 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-import './App.css'
-import LoginForm from './LoginForm'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './Home';
+import Login from './LoginForm';
 
-function App() {
-  return <LoginForm />
-}
+const App = () => {
+  return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+  );
+};
 
-export default App
+export default App;
