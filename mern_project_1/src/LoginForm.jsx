@@ -53,7 +53,7 @@ const Login = () => {
   }
 };
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-cover bg-center bg-no-repeat h-screen w-screen" >
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[url(spaceBG.jpg)] bg-cover bg-center bg-no-repeat h-screen w-screen" >
       <div className="bg-white/50 shadow-xl/30  backdrop-blur-sm p-6 rounded-lg w-full max-w-sm hover:bg-white/100">
         <h2 className="text-xl font-semibold mb-4 ">Sign in to Continue</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
