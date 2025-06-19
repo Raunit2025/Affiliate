@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 function Home() {
     return(
         <div className="min-h-screen flex items-center justify-center flex-col bg-radial-[at_25%_25%] from-white to-zinc-900 to-75%">

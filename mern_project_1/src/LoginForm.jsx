@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Login = () => {
+const Login = ({ updateUserDetails }) => {
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,11 +43,11 @@ const Login = () => {
   const envUsername = import.meta.env.VITE_LOGIN_USERNAME;
   const envPassword = import.meta.env.VITE_LOGIN_PASSWORD;
 
-  if (
-    trimmedUsername === envUsername &&
-    trimmedPassword === envPassword
-  ) {
-    navigate('/');
+  if ( trimmedUsername === envUsername && trimmedPassword === envPassword  ) {
+      updateUserDetails({
+        name: 'john',
+        email: 'john@gmail.com',
+      });
   } else {
     setError('Invalid username or password');
   }
