@@ -1,9 +1,8 @@
-import React, { use, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './Home';
 import Login from './LoginForm';
 import Dashboard from './pages/Dashboard';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 
@@ -36,7 +35,7 @@ const App = () => {
         <Login updateUserDetails={updateUserDetails} />}
       />
       <Route path="/dashboard" element={userDetails ?
-        <Dashboard /> :
+        <Dashboard updateUserDetails={updateUserDetails}/> :
         <Navigate to="/login" />}
       />
     </Routes>
