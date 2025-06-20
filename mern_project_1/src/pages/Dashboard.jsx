@@ -1,15 +1,14 @@
 import axios from "axios";
+import { Navigate } from "react-router-dom";
 
-function Dashboard() {
-
+function Dashboard({updateUserDetails}) {
+    
 
   const handleLogout = async ({updateUserDetails}) => {
     try {
       await axios.post('http://localhost:5001/auth/logout', {}, { withCredentials: true });
-        updateUserDetails({
-          username: null,
-          password: null,
-        });
+        updateUserDetails(null);
+        
 
     } catch (error) {
       console.error('Logout failed:', error);
