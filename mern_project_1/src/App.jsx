@@ -4,6 +4,7 @@ import Login from './LoginForm';
 import Dashboard from './pages/Dashboard';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Logout from './pages/Logout';
 
 
 
@@ -16,10 +17,14 @@ const App = () => {
   }
 
   const isUserLoggedIn = async () => {
+    try{
     const response = await axios.post('http://localhost:5001/auth/is-user-logged-in', {}, {
       withCredentials: true
     });
     updateUserDetails(response.data.user); 
+  } catch(error){
+    console.log(error);
+    }
   };
   useEffect(() => {
     isUserLoggedIn();
@@ -34,8 +39,16 @@ const App = () => {
         <Navigate to="/dashboard" /> :
         <Login updateUserDetails={updateUserDetails} />}
       />
+
+      <Route path="/logout" element={userDetails ? 
+        <Logout updateUserDetails={updateUserDetails}/>:
+        <Navigate to ="/login" /> }/>
+        <Route path="error" element={userDetails ?
+          <Error />:
+          <Error/>
+      }></Route>
       <Route path="/dashboard" element={userDetails ?
-        <Dashboard updateUserDetails={updateUserDetails}/> :
+        <Dashboard /> :
         <Navigate to="/login" />}
       />
     </Routes>
