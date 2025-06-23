@@ -1,9 +1,14 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
 const express = require('express'); // Include the express module
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/authRoutes');
 const cors = require('cors');
 const app = express();// Instatiate express app.
+
+mongoose.connect(process.env.MONGO_URL)
+.then(() => console.log('MongoDB Connected'))
+.catch((error) => console.log(error));
 
 app.use(express.json());// Middleware to convert json to javascript object.
 app.use(cookieParser());
