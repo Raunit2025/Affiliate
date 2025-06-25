@@ -6,8 +6,6 @@ const Login = ({ updateUserDetails }) => {
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
-
-
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -46,54 +44,59 @@ const Login = ({ updateUserDetails }) => {
     const envPassword = import.meta.env.VITE_LOGIN_PASSWORD;
 
     if (trimmedUsername === envUsername && trimmedPassword === envPassword) {
-      //Data to be sent to the server
       const body = {
         username: trimmedUsername,
         password: trimmedPassword
       };
-      const config = {
-        withCredentials: true //Tells axios to include cookie in the request + some other auth headers
-      };
+      const config = { withCredentials: true };
       try {
-        const response = await axios.post('http://localhost:5001/auth/login', body, config);
+        const response = await axios.post(`${import.meta.env.VITE_SERVER_ENDPOINT}/auth/login`, body, config);
         console.log(response);
         updateUserDetails({
-
           username: 'admin',
           password: '123456',
         });
-
       } catch (error) {
         console.log(error);
-        setError({ message: "Somthing went wrong Please try again" });
+        setError("Something went wrong. Please try again.");
       }
-
+    } else {
+      setError("Invalid username or password");
     }
   };
 
   const handleGoogleSuccess = async (authResponse) => {
+    console.log("Google Auth Response:", authResponse);
+
     try {
-      const response = await axios.post('http://localhost:5001/auth/google-auth', {
-        idToken: authResponse.withCredential
+      const idToken = authResponse?.credential;
+      if (!idToken) {
+        setError("No ID token received from Google.");
+        return;
+      }
+
+      const response = await axios.post(`${import.meta.env.VITE_SERVER_ENDPOINT}/auth/google-auth`, {
+        idToken
       }, {
         withCredentials: true
       });
+
       updateUserDetails(response.data.user);
     } catch (error) {
-      console.log(error);
-      setError({ message: 'Error processing google auth, please try again' });
+      console.error(error);
+      setError("Google login failed. Please try again.");
     }
   };
 
-
-  const handleGoogleError = async (error) => {
+  const handleGoogleError = (error) => {
     console.log(error);
-    setError({ message: 'Error in google authorization flow , please try again' });
-  }
+    setError("Error in Google authorization flow, please try again.");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4  bg-cover bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-center bg-no-repeat h-screen w-screen" >
-      <div className="bg-white/50 shadow-xl/30  backdrop-blur-sm p-6 rounded-lg w-full max-w-sm hover:bg-white/100">
-        <h2 className="text-xl font-semibold mb-4 ">Sign in to Continue</h2>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-cover bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-center bg-no-repeat h-screen w-screen">
+      <div className="bg-white/50 shadow-xl/30 backdrop-blur-sm p-6 rounded-lg w-full max-w-sm hover:bg-white/100">
+        <h2 className="text-xl font-semibold mb-4">Sign in to Continue</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm mb-1">UserName</label>
@@ -125,11 +128,10 @@ const Login = ({ updateUserDetails }) => {
             Submit
           </button>
         </form>
-        <h2>OR</h2>
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID}>
+        <h2 className="text-center my-2 text-sm text-gray-700">OR</h2>
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
           <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
         </GoogleOAuthProvider>
-
       </div>
     </div>
   );

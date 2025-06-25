@@ -2,138 +2,147 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Users = require('../model/Users');
 const { OAuth2Client } = require('google-auth-library');
+
 const secret = "3f635806-4c5c-4d27-8f90-a0873f217694";
 
 const authController = {
-    login: async (request, response) => {
-        try {
-            const { username, password } = request.body;
+  login: async (request, response) => {
+    try {
+      const { username, password } = request.body;
 
-            const data = await Users.findOne({ email: username });
-            if (!data) {
-                return response.status(401).json({ message: 'Invalid credentials' });
-            }
+      const data = await Users.findOne({ email: username });
+      if (!data) {
+        return response.status(401).json({ message: 'Invalid credentials' });
+      }
 
-            const isMatch = await bcrypt.compare(password, data.password);
-            if (!isMatch) {
-                return response.status(401).json({ message: 'Invalid credentials' });
-            }
+      const isMatch = await bcrypt.compare(password, data.password);
+      if (!isMatch) {
+        return response.status(401).json({ message: 'Invalid credentials' });
+      }
 
-            const user = {
-                id: data._id,
-                name: data.name,
-                email: data.email
-            };
+      const user = {
+        id: data._id,
+        name: data.name,
+        email: data.email
+      };
 
-            const token = jwt.sign(user, secret, { expiresIn: '1h' });
+      const token = jwt.sign(user, secret, { expiresIn: '1h' });
 
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'Strict',
-                domain: 'localhost',
-                path: '/'
-            });
+      response.cookie('jwtToken', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Strict',
+        domain: 'localhost',
+        path: '/'
+      });
 
-            response.json({ user, message: 'User authenticated' });
-        } catch (error) {
-            console.error(error);
-            response.status(500).json({ error: 'Internal server error' });
-        }
-    },
+      response.json({ user, message: 'User authenticated' });
+    } catch (error) {
+      console.error(error);
+      response.status(500).json({ error: 'Internal server error' });
+    }
+  },
 
-    logout: (request, response) => {
-        response.clearCookie('jwtToken', {
-            domain: 'localhost',
-            path: '/'
+  logout: (request, response) => {
+    response.clearCookie('jwtToken', {
+      domain: 'localhost',
+      path: '/'
+    });
+    response.json({ message: "Logout successful" });
+  },
+
+  isUserLoggedIn: (request, response) => {
+    const token = request.cookies.jwtToken;
+
+    if (!token) {
+      return response.status(401).json({ message: 'Unauthorized access' });
+    }
+
+    jwt.verify(token, secret, (error, user) => {
+      if (error) {
+        return response.status(401).json({ message: 'Unauthorized access' });
+      }
+      response.json({ message: 'User logged in', user });
+    });
+  },
+
+  register: async (request, response) => {
+    try {
+      const { username, password, name } = request.body;
+
+      const existingUser = await Users.findOne({ email: username });
+      if (existingUser) {
+        return response.status(401).json({ message: 'Account already exists with given email' });
+      }
+
+      const encryptedPassword = await bcrypt.hash(password, 10);
+
+      const newUser = new Users({
+        email: username,
+        password: encryptedPassword,
+        name
+      });
+
+      await newUser.save();
+      response.status(200).json({ message: 'User registered' });
+    } catch (error) {
+      console.error(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  },
+
+  googleAuth: async (request, response) => {
+    try {
+      const { idToken } = request.body;
+
+      if (!idToken) {
+        return response.status(401).json({ message: 'Invalid request' });
+      }
+
+      const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+
+      const payload = ticket.getPayload();
+      const { sub: googleId, name, email } = payload;
+
+      let data = await Users.findOne({ email });
+
+      if (!data) {
+        data = new Users({
+          email,
+          name,
+          isGoogleUser: true,
+          googleId
         });
-        response.json({ message: "Logout successful" });
-    },
+        await data.save();
+      }
 
-    isUserLoggedIn: (request, response) => {
-        const token = request.cookies.jwtToken;
+      const user = {
+        id: data._id,
+        username: email,
+        name
+      };
 
-        if (!token) {
-            return response.status(401).json({ message: 'Unauthorized access' });
-        }
+      const token = jwt.sign(user, secret, { expiresIn: '1h' });
 
-        jwt.verify(token, secret, (error, user) => {
-            if (error) {
-                return response.status(401).json({ message: 'Unauthorized access' });
-            }
-            response.json({ message: 'User logged in', user });
-        });
-    },
+      response.cookie('jwtToken', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Strict',
+        domain: 'localhost',
+        path: '/'
+      });
 
-    register: async (request, response) => {
-        try{
-           const { username, password, name } = request.body;
+      response.json({ user, message: 'User authenticated' });
 
-           const data = await Users.findOne({
-            email: username
-           });
-           if(data) {
-            return response.status(401).json({message: 'Account already exist with given email'});
-           }
-           const encryptedPassword = await bcrypt.hash(password, 10);
-
-           const user = new Users({
-            email: username,
-            password: encryptedPassword,
-            name: name
-            });
-            await user.save();
-            response.status(200).json({message: 'User registered'});
-        } catch (error){
-            console.error(error);
-            return response.status(500).json({message: 'Internal server error'});
-        }
-    },
-
-    googleAuth: async (request, response) => {
-        try{
-            const { idToken } = request.body;
-            if(!idToken) {
-                return response.status(401).json({
-                    message: 'Invalid request'
-                });
-            }
-            const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-            const googleResponse = await googleClient.verifyIdToken({
-                idToken: idToken.process.env.GOOGLE_CLIENT_ID
-            });
-            const payload = googleResponse.getPayload();
-            const { sub: googleId, name, email } = payload;
-            let data = await Users.findOne ({ email: email });
-            
-            if(data) {
-                data = new Users({
-                    email: email,
-                    name: name,
-                    isGoogleUser: true,
-                    googleId: googleId
-                });
-                await data.save();
-            }
-            const user = {
-                id: data._id? data._id : googleId,
-                username: email,
-                name: name
-            };
-
-            const token = jwt.sign(user, secret, { expiresIn: '1h' });
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                paht: '/'
-            });
-            response.json({ user: user, message: 'User authenticated' });
-        } catch (error) {
-            console.error(error);
-            return response.status(500).json({message: 'Interval server error'});
-        }
-    },
+    } catch (error) {
+      console.error(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  },
 };
 
 module.exports = authController;
