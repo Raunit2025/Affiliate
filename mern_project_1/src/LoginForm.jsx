@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { useDispatch } from 'react-redux';
+import { serverEndpoint } from './config';
 
-const Login = ({ updateUserDetails }) => {
+const Login = () => {
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -14,60 +17,36 @@ const Login = ({ updateUserDetails }) => {
     e.preventDefault();
     setError('');
 
-    const trimmedUsername = form.username.trim();
-    const trimmedPassword = form.password.trim();
+    const { username, password } = form;
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
 
-    if (!trimmedUsername && !trimmedPassword) {
+    if (!trimmedUsername || !trimmedPassword) {
       setError('Both fields are required');
       return;
     }
-    if (!trimmedUsername) {
-      setError('UserName is required');
-      return;
-    }
-    if (!trimmedPassword) {
-      setError('Password is required');
+
+    if (trimmedUsername.length < 3 || trimmedPassword.length < 6) {
+      setError('Invalid credentials length');
       return;
     }
 
-    if (trimmedUsername.length < 3) {
-      setError('Username must be at least 3 characters');
-      return;
-    }
+    const body = { username: trimmedUsername, password: trimmedPassword };
+    const config = { withCredentials: true };
 
-    if (trimmedPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    const envUsername = import.meta.env.VITE_LOGIN_USERNAME;
-    const envPassword = import.meta.env.VITE_LOGIN_PASSWORD;
-
-    if (trimmedUsername === envUsername && trimmedPassword === envPassword) {
-      const body = {
-        username: trimmedUsername,
-        password: trimmedPassword
-      };
-      const config = { withCredentials: true };
-      try {
-        const response = await axios.post(`${import.meta.env.VITE_SERVER_ENDPOINT}/auth/login`, body, config);
-        console.log(response);
-        updateUserDetails({
-          username: 'admin',
-          password: '123456',
-        });
-      } catch (error) {
-        console.log(error);
-        setError("Something went wrong. Please try again.");
-      }
-    } else {
-      setError("Invalid username or password");
+    try {
+      const res = await axios.post(`${serverEndpoint}/auth/login`, body, config);
+      dispatch({
+        type: 'SET_USER',
+        payload: res.data.user
+      });
+    } catch (err) {
+      console.error(err);
+      setError('Invalid username or password');
     }
   };
 
   const handleGoogleSuccess = async (authResponse) => {
-    console.log("Google Auth Response:", authResponse);
-
     try {
       const idToken = authResponse?.credential;
       if (!idToken) {
@@ -75,22 +54,22 @@ const Login = ({ updateUserDetails }) => {
         return;
       }
 
-      const response = await axios.post(`${import.meta.env.VITE_SERVER_ENDPOINT}/auth/google-auth`, {
-        idToken
-      }, {
+      const res = await axios.post(`${serverEndpoint}/auth/google-auth`, { idToken }, {
         withCredentials: true
       });
 
-      updateUserDetails(response.data.user);
+      dispatch({
+        type: 'SET_USER',
+        payload: res.data.user
+      });
     } catch (error) {
       console.error(error);
       setError("Google login failed. Please try again.");
     }
   };
 
-  const handleGoogleError = (error) => {
-    console.log(error);
-    setError("Error in Google authorization flow, please try again.");
+  const handleGoogleError = () => {
+    setError("Google login failed.");
   };
 
   return (
@@ -99,14 +78,14 @@ const Login = ({ updateUserDetails }) => {
         <h2 className="text-xl font-semibold mb-4">Sign in to Continue</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm mb-1">UserName</label>
+            <label className="block text-sm mb-1">Username</label>
             <input
               type="text"
               name="username"
               value={form.username}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="UserName"
+              placeholder="Username"
             />
           </div>
           <div>
