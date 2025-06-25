@@ -43,8 +43,9 @@ const App = () => {
       } />
       <Route path="/error" element={<Error />} />
       <Route path="/dashboard" element={
-        userDetails ? <Dashboard /> : <Navigate to="/login" />
+        userDetails ? <Dashboard user={userDetails} /> : <Navigate to="/login" />
       } />
+
     </Routes>
   );
 };

@@ -10,6 +10,28 @@ const authController = {
     try {
       const { username, password } = request.body;
 
+      // Hardcoded admin login
+      if (username === 'admin' && password === '123456') {
+        const user = {
+          id: 'admin-id',
+          name: 'Admin',
+          email: 'admin'
+        };
+
+        const token = jwt.sign(user, secret, { expiresIn: '1h' });
+
+        response.cookie('jwtToken', token, {
+          httpOnly: true,
+          secure: false, // Use `true` in production with HTTPS
+          sameSite: 'Strict',
+          domain: 'localhost',
+          path: '/'
+        });
+
+        return response.json({ user, message: 'Admin authenticated' });
+      }
+
+      // Normal DB login
       const data = await Users.findOne({ email: username });
       if (!data) {
         return response.status(401).json({ message: 'Invalid credentials' });
@@ -30,7 +52,7 @@ const authController = {
 
       response.cookie('jwtToken', token, {
         httpOnly: true,
-        secure: true,
+        secure: false, // Use `true` in production with HTTPS
         sameSite: 'Strict',
         domain: 'localhost',
         path: '/'
@@ -130,7 +152,7 @@ const authController = {
 
       response.cookie('jwtToken', token, {
         httpOnly: true,
-        secure: true,
+        secure: false, // Use `true` in production with HTTPS
         sameSite: 'Strict',
         domain: 'localhost',
         path: '/'
