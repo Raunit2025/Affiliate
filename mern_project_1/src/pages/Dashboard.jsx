@@ -2,22 +2,18 @@ import { Link } from "react-router-dom";
 
 function Dashboard({ user }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-center bg-no-repeat">
-      <div className="bg-white/100 shadow-xl/30 backdrop-blur-sm p-6 rounded-lg w-full max-w-md  text-center">
-        <h2 className="text-2xl font-semibold mb-4">Welcome to your Dashboard</h2>
-        
-        {user ? (
-          <div className="mb-4 text-left text-gray-700">
-            <p><strong>Name:</strong> {user.name}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-          </div>
-        ) : (
-          <p className="text-red-600">User info not available</p>
-        )}
+    <div className="min-h-screen flex items-center justify-center px-4 bg-cover bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-center bg-no-repeat h-screen w-screen">
+      <div className="bg-white/50 shadow-xl/30 backdrop-blur-sm p-6 rounded-lg w-full max-w-sm hover:bg-white/100 text-center">
+        <h1 className="text-2xl font-semibold mb-4">User Dashboard</h1>
+
+        <div className="mb-4 text-left space-y-1">
+          <p><strong>Username:</strong> {user?.username || "N/A"}</p>
+          <p><strong>Password:</strong> {user?.password || "N/A"}</p>
+        </div>
 
         <Link
           to="/logout"
-          className="inline-block bg-gray-900 text-white py-2 px-4 rounded-md mt-4 hover:bg-black"
+          className="inline-block mt-4 bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-black"
         >
           Logout
         </Link>
