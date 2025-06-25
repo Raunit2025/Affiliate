@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Users = require('../model/Users');
+const { OAuth2Client } = require('google-auth-library');
 const secret = "3f635806-4c5c-4d27-8f90-a0873f217694";
 
 const authController = {
@@ -62,7 +63,77 @@ const authController = {
             }
             response.json({ message: 'User logged in', user });
         });
-    }
+    },
+
+    register: async (request, response) => {
+        try{
+           const { username, password, name } = request.body;
+
+           const data = await Users.findOne({
+            email: username
+           });
+           if(data) {
+            return response.status(401).json({message: 'Account already exist with given email'});
+           }
+           const encryptedPassword = await bcrypt.hash(password, 10);
+
+           const user = new Users({
+            email: username,
+            password: encryptedPassword,
+            name: name
+            });
+            await user.save();
+            response.status(200).json({message: 'User registered'});
+        } catch (error){
+            console.error(error);
+            return response.status(500).json({message: 'Internal server error'});
+        }
+    },
+
+    googleAuth: async (request, response) => {
+        try{
+            const { idToken } = request.body;
+            if(!idToken) {
+                return response.status(401).json({
+                    message: 'Invalid request'
+                });
+            }
+            const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+            const googleResponse = await googleClient.verifyIdToken({
+                idToken: idToken.process.env.GOOGLE_CLIENT_ID
+            });
+            const payload = googleResponse.getPayload();
+            const { sub: googleId, name, email } = payload;
+            let data = await Users.findOne ({ email: email });
+            
+            if(data) {
+                data = new Users({
+                    email: email,
+                    name: name,
+                    isGoogleUser: true,
+                    googleId: googleId
+                });
+                await data.save();
+            }
+            const user = {
+                id: data._id? data._id : googleId,
+                username: email,
+                name: name
+            };
+
+            const token = jwt.sign(user, secret, { expiresIn: '1h' });
+            response.cookie('jwtToken', token, {
+                httpOnly: true,
+                secure: true,
+                domain: 'localhost',
+                paht: '/'
+            });
+            response.json({ user: user, message: 'User authenticated' });
+        } catch (error) {
+            console.error(error);
+            return response.status(500).json({message: 'Interval server error'});
+        }
+    },
 };
 
 module.exports = authController;

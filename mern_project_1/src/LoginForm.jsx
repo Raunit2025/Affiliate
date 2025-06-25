@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+
 const Login = ({ updateUserDetails }) => {
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
@@ -56,7 +58,7 @@ const Login = ({ updateUserDetails }) => {
         const response = await axios.post('http://localhost:5001/auth/login', body, config);
         console.log(response);
         updateUserDetails({
-      
+
           username: 'admin',
           password: '123456',
         });
@@ -68,6 +70,26 @@ const Login = ({ updateUserDetails }) => {
 
     }
   };
+
+  const handleGoogleSuccess = async (authResponse) => {
+    try {
+      const response = await axios.post('http://localhost:5001/auth/google-auth', {
+        idToken: authResponse.withCredential
+      }, {
+        withCredentials: true
+      });
+      updateUserDetails(response.data.user);
+    } catch (error) {
+      console.log(error);
+      setError({ message: 'Error processing google auth, please try again' });
+    }
+  };
+
+
+  const handleGoogleError = async (error) => {
+    console.log(error);
+    setError({ message: 'Error in google authorization flow , please try again' });
+  }
   return (
     <div className="min-h-screen flex items-center justify-center px-4  bg-cover bg-radial-[at_25%_25%] from-white to-zinc-900 to-75% bg-center bg-no-repeat h-screen w-screen" >
       <div className="bg-white/50 shadow-xl/30  backdrop-blur-sm p-6 rounded-lg w-full max-w-sm hover:bg-white/100">
@@ -103,6 +125,11 @@ const Login = ({ updateUserDetails }) => {
             Submit
           </button>
         </form>
+        <h2>OR</h2>
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID}>
+          <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        </GoogleOAuthProvider>
+
       </div>
     </div>
   );
