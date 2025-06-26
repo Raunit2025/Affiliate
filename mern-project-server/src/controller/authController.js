@@ -4,7 +4,7 @@ const Users = require('../model/Users');
 const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
 
-const secret = "3f635806-4c5c-4d27-8f90-a0873f217694";
+const secret = process.env.JWT_SECRET;
 
 const authController = {
   login: async (request, response) => {
