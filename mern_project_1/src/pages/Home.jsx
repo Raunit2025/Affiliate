@@ -4,7 +4,7 @@ function Home() {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-radial-[at_25%_25%] from-white to-zinc-900 to-75%">
 
-      {/* Header */}
+      {/* Header
       <header className="bg-white/70 backdrop-blur-md shadow-md p-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800">MERN Auth App</h1>
@@ -15,7 +15,7 @@ function Home() {
             <Link to="#" className="pr-2 text-blue-600 hover:underline">Contact Us</Link>
           </nav>
         </div>
-      </header>
+      </header> */}
 
       {/* Main Content */}
       <main className="flex-grow flex items-center justify-center flex-col text-center px-4">
@@ -28,10 +28,10 @@ function Home() {
         </Link>
       </main>
 
-      {/* Footer */}
+      {/* Footer
       <footer className="bg-white/70 backdrop-blur-md text-center py-3 text-sm text-gray-700 shadow-inner">
         © {new Date().getFullYear()} MERN Auth App. All rights reserved.
-      </footer>
+      </footer> */}
     </div>
   );
 }

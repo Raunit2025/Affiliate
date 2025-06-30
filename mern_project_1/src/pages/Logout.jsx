@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { serverEndpoint } from "../config";
+import { serverEndpoint } from "../config/config";
 
 function Logout() {
   const navigate = useNavigate();
