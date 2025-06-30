@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 
@@ -19,6 +19,7 @@ import { SET_USER } from "./redux/user/actions";
 function App() {
   const dispatch = useDispatch();
   const userDetails = useSelector((state) => state.userDetails);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getLoggedInUser = async () => {
@@ -29,11 +30,21 @@ function App() {
         dispatch({ type: SET_USER, payload: response.data.user });
       } catch (err) {
         console.log("User not logged in");
+      } finally {
+        setLoading(false);
       }
     };
 
     getLoggedInUser();
   }, [dispatch]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -41,9 +52,7 @@ function App() {
         path="/"
         element={
           userDetails ? (
-            <UserLayout>
-              <Navigate to="/dashboard" />
-            </UserLayout>
+            <Navigate to="/dashboard" />
           ) : (
             <AppLayout>
               <Home />
@@ -56,9 +65,7 @@ function App() {
         path="/login"
         element={
           userDetails ? (
-            <UserLayout>
-              <Navigate to="/dashboard" />
-            </UserLayout>
+            <Navigate to="/dashboard" />
           ) : (
             <AppLayout>
               <Login />
@@ -123,5 +130,6 @@ function App() {
     </Routes>
   );
 }
+
 
 export default App;

@@ -107,7 +107,7 @@ const authController = {
                 domain: 'localhost',
                 path: '/'
             });
-            response.json({message: 'User registered', user: userDetails});
+            response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
             console.log(error);
             return response.status(500).json({ error: 'Internal Server Error' });
@@ -118,7 +118,7 @@ const authController = {
         try {
             const { idToken } = request.body;
             if (!idToken) {
-                return response.status(401).json({ message: 'Invalid request'});
+                return response.status(401).json({ message: 'Invalid request' });
             }
 
             const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -142,7 +142,7 @@ const authController = {
             }
 
             const user = {
-                id: data._id? data._id : googleId,
+                id: data._id ? data._id : googleId,
                 username: email,
                 name: name
             };
@@ -150,10 +150,11 @@ const authController = {
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: true,
-                domain: 'localhost',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
                 path: '/'
             });
+
             response.json({ user: user, message: 'User authenticated' });
         } catch (error) {
             console.log(error);
