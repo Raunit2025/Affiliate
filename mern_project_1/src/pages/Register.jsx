@@ -17,30 +17,25 @@ function Register() {
   const [errors, setErrors] = useState({});
 
   const handleChange = (event) => {
-    const name = event.target.name;
-    const value = event.target.value;
-
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const validate = () => {
-    let newErrors = {};
+    const newErrors = {};
     let isValid = true;
 
-    if (formData.username.length === 0) {
+    if (!formData.username.trim()) {
       newErrors.username = "Username is mandatory";
       isValid = false;
     }
 
-    if (formData.password.length === 0) {
+    if (!formData.password.trim()) {
       newErrors.password = "Password is mandatory";
       isValid = false;
     }
 
-    if (formData.name.length === 0) {
+    if (!formData.name.trim()) {
       newErrors.name = "Name is mandatory";
       isValid = false;
     }
@@ -58,12 +53,10 @@ function Register() {
         password: formData.password,
         name: formData.name
       };
-      const configuration = {
-        withCredentials: true
-      };
+      const config = { withCredentials: true };
 
       try {
-        const response = await axios.post(`${serverEndpoint}/auth/register`, body, configuration);
+        const response = await axios.post(`${serverEndpoint}/auth/register`, body, config);
         dispatch({ type: SET_USER, payload: response.data });
       } catch (error) {
         console.error(error);
@@ -86,89 +79,90 @@ function Register() {
     }
   };
 
-  const handleGoogleSigninFailure = (error) => {
-    console.log(error);
+  const handleGoogleSigninFailure = () => {
     setErrors({ message: 'Something went wrong while Google Sign-in' });
   };
 
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-md-4">
-          <h2 className="text-center mb-4">Sign up with a new account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-md bg-white p-6 rounded shadow-md">
+        <h2 className="text-2xl font-semibold text-center mb-6">Sign up with a new account</h2>
 
-          {errors.message && (
-            <div className="alert alert-danger" role="alert">
-              {errors.message}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="name" className="form-label">Name</label>
-              <input
-                type="text"
-                className={`form-control ${errors.name ? 'is-invalid' : ''}`}
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-              {errors.name && (
-                <div className="invalid-feedback">{errors.name}</div>
-              )}
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="username" className="form-label">Username</label>
-              <input
-                type="text"
-                className={`form-control ${errors.username ? 'is-invalid' : ''}`}
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-              />
-              {errors.username && (
-                <div className="invalid-feedback">{errors.username}</div>
-              )}
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="password" className="form-label">Password</label>
-              <input
-                type="password"
-                className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              {errors.password && (
-                <div className="invalid-feedback">{errors.password}</div>
-              )}
-            </div>
-
-            <div className="d-grid">
-              <button type="submit" className="btn btn-primary">Submit</button>
-            </div>
-          </form>
-
-          <div className="text-center">
-            <div className="my-4 d-flex align-items-center text-muted">
-              <hr className="flex-grow-1" />
-              <span className="px-2">OR</span>
-              <hr className="flex-grow-1" />
-            </div>
-
-            <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-              <GoogleLogin
-                onSuccess={handleGoogleSignin}
-                onError={handleGoogleSigninFailure}
-              />
-            </GoogleOAuthProvider>
+        {errors.message && (
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">
+            {errors.message}
           </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${
+                errors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              name="username"
+              id="username"
+              value={formData.username}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${
+                errors.username ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              id="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${
+                errors.password ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          >
+            Submit
+          </button>
+        </form>
+
+        <div className="my-6 flex items-center text-sm text-gray-400">
+          <hr className="flex-grow border-t border-gray-300" />
+          <span className="px-3">OR</span>
+          <hr className="flex-grow border-t border-gray-300" />
         </div>
+
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+          <GoogleLogin onSuccess={handleGoogleSignin} onError={handleGoogleSigninFailure} />
+        </GoogleOAuthProvider>
       </div>
     </div>
   );
