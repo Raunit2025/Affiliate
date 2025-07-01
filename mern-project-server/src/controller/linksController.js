@@ -9,7 +9,8 @@ const linksController = {
                 campaignTitle: campaign_title,
                 originalUrl: original_url,
                 category: category,
-                user: request.user.id // Coming from middleware; AuthMiddleware
+                user: request.user.id === 'admin' ? 
+                    request.user.id: request.user.admiId // Coming from middleware; AuthMiddleware
             });
             link.save();
             response.json({
@@ -25,6 +26,8 @@ const linksController = {
 
     getAll: async (request, response) => {
         try {
+            const userId = request.user.role === 'admin' ? 
+                request.user.id : request.user.adminId;
             const links = await Links
                 .find({ user: request.user.id })
                 .sort({ createdAt: -1 });
@@ -50,9 +53,10 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
-
+            const userId = request.user.role === 'admin' ? 
+                request.user.id : request.user.adminId;
             // Make sure the link indeed belong to the logged in user.
-            if (link.user.toString() !== request.user.id) {
+            if (link.user.toString() !== userId) {
                 return response.status(403).json({
                     error: 'Unauthorized access'
                 });
@@ -80,9 +84,10 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
-
+            const userId = request.user.role === 'admin' ? 
+                request.user.id : request.user.adminId;
             // Make sure the link indeed belong to the logged in user.
-            if (link.user.toString() !== request.user.id) {
+            if (link.user.toString() !== userId) {
                 return response.status(403).json({
                     error: 'Unauthorized access'
                 });
@@ -118,9 +123,10 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
-
+            const userId = request.user.role === 'admin' ? 
+                request.user.id : request.user.adminId;
             // Make sure the link indeed belong to the logged in user.
-            if (link.user.toString() !== request.user.id) {
+            if (link.user.toString() !== userId) {
                 return response.status(403).json({
                     error: 'Unauthorized access'
                 });

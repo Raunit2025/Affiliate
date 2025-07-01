@@ -2,11 +2,9 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const session = require('express-session');
 const cors = require('cors');
 
 const userRoutes = require('./src/routes/userRoutes');
-
 const authRoutes = require('./src/routes/authRoutes');
 const linksRoutes = require('./src/routes/linksRoutes');
 
@@ -20,26 +18,13 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(
-  session({
-    secret: 'yourSecretKey',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24,
-    },
-  })
-);
-
-app.use(
   cors({
     origin: process.env.CLIENT_ENDPOINT,
     credentials: true,
   })
 );
 
+// Routes
 app.use('/auth', authRoutes);
 app.use('/links', linksRoutes);
 app.use('/users', userRoutes);

@@ -18,4 +18,6 @@ router.post('/is-user-logged-in', authController.isUserLoggedIn);
 router.post('/register', authController.register);
 router.post('/google-auth', authController.googleAuth);
 
+router.get('/getuser', authController.isUserLoggedIn);
+
 module.exports = router;

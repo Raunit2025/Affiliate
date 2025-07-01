@@ -6,6 +6,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Modal, Box, Typography } from '@mui/material';
 import { serverEndpoint } from '../../config/config';
+import { useSelector } from "react-redux";
+
 
 function LinksDashboard() {
   const [errors, setErrors] = useState({});
@@ -31,9 +33,17 @@ function LinksDashboard() {
     }
   };
 
+  const userDetails = useSelector((state) => state.userDetails);
+  const [userChecked, setUserChecked] = useState(false);
+
+  // Watch for userDetails change
   useEffect(() => {
-    fetchLinks();
-  }, []);
+    setUserChecked(true);
+  }, [userDetails]);
+
+  if (!userChecked) return null; // wait until state is checked
+  if (!userDetails) return <Navigate to="/login" replace />;
+
 
   const handleOpenModal = (edit = false, data = {}) => {
     if (edit) {
@@ -230,9 +240,8 @@ function LinksDashboard() {
                   id={field}
                   value={formData[field]}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded ${
-                    errors[field] ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded ${errors[field] ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 />
                 {errors[field] && (
                   <p className="text-red-500 text-sm mt-1">{errors[field]}</p>

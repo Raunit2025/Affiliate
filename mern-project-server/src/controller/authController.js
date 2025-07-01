@@ -9,46 +9,51 @@ const secret = process.env.JWT_SECRET;
 
 const authController = {
     login: async (request, response) => {
-        try {
-            const errors = validationResult(request);
-            if (!errors.isEmpty()) {
-                return response.status(401).json({ errors: errors.array() });
-            }
+  try {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      return response.status(401).json({ errors: errors.array() });
+    }
 
-            // The body contains username and password because of the express.json()
-            // middleware configured in the server.js
-            const { username, password } = request.body;
+    const { username, password } = request.body;
 
-            // Call Database to fetch user by the email
-            const data = await Users.findOne({ email: username });
-            if (!data) {
-                return response.status(401).json({ message: 'Invalid credentials ' });
-            }
+    const data = await Users.findOne({ email: username });
+    if (!data) {
+      return response.status(401).json({ message: 'Invalid credentials' });
+    }
 
-            const isMatch = await bcrypt.compare(password, data.password);
-            if (!isMatch) {
-                return response.status(401).json({ message: 'Invalid credentials ' });
-            }
+    const isMatch = await bcrypt.compare(password, data.password);
+    if (!isMatch) {
+      return response.status(401).json({ message: 'Invalid credentials' });
+    }
 
-            const user = {
-                id: data._id,
-                name: data.name,
-                email: data.email
-            };
+    const user = {
+      id: data._id,
+      name: data.name,
+      email: data.email,
+      role: data.role ? data.role : 'admin'
+    };
 
-            const token = jwt.sign(user, secret, { expiresIn: '1h' });
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
-            });
-            response.json({ user: user, message: 'User authenticated' });
-        } catch (error) {
-            console.log(error);
-            response.status(500).json({ error: 'Internal server error' });
-        }
-    },
+    // ✅ Generate JWT token
+    const token = jwt.sign(user, secret, { expiresIn: '1h' });
+
+    // ✅ Set secure cookie correctly
+    response.cookie('jwtToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // optional: persist 7 days
+    });
+
+    // ✅ Send response
+    response.json({ user: user, message: 'User authenticated' });
+  } catch (error) {
+    console.log(error);
+    response.status(500).json({ error: 'Internal server error' });
+  }
+},
+
 
     logout: (request, response) => {
         response.clearCookie('jwtToken');
@@ -72,47 +77,48 @@ const authController = {
     },
 
     register: async (request, response) => {
-  try {
-    const { username, password, name } = request.body;
+        try {
+            const { username, password, name } = request.body;
 
-    const data = await Users.findOne({ email: username });
-    if (data) {
-      return response.status(409).json({ message: 'Account already exists with given email' });
-    }
+            const data = await Users.findOne({ email: username });
+            if (data) {
+                return response.status(409).json({ message: 'Account already exists with given email' });
+            }
 
-    const encryptedPassword = await bcrypt.hash(password, 10);
+            const encryptedPassword = await bcrypt.hash(password, 10);
 
-    const user = new Users({
-      email: username,
-      password: encryptedPassword,
-      name: name
-    });
+            const user = new Users({
+                email: username,
+                password: encryptedPassword,
+                name: name
+            });
 
-    await user.save();
+            await user.save();
 
-    const userDetails = {
-      id: user._id,
-      name: user.name,
-      email: user.email
-    };
+            const userDetails = {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: data.role ? data.role: 'admin'
+            };
 
-    const token = jwt.sign(userDetails, secret, {
-      expiresIn: '1h'
-    });
+            const token = jwt.sign(userDetails, secret, {
+                expiresIn: '1h'
+            });
 
-    response.cookie('jwtToken', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // ✅ only secure in prod
-      sameSite: 'lax',
-      path: '/'
-    });
+            response.cookie('jwtToken', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', 
+                sameSite: 'lax',
+                path: '/'
+            });
 
-    response.json({ message: 'User registered', user: userDetails });
-  } catch (error) {
-    console.log(error);
-    return response.status(500).json({ error: 'Internal Server Error' });
-  }
-},
+            response.json({ message: 'User registered', user: userDetails });
+        } catch (error) {
+            console.log(error);
+            return response.status(500).json({ error: 'Internal Server Error' });
+        }
+    },
 
 
     googleAuth: async (request, response) => {
@@ -145,16 +151,17 @@ const authController = {
             const user = {
                 id: data._id ? data._id : googleId,
                 username: email,
-                name: name
+                name: name,
+                role: data.role ? data.role: 'admin' //This is the ensure backward compatibility
             };
 
-            const token = jwt.sign(user, secret, { expiresIn: '1h' });
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: process.env.NODE_ENV === 'production', 
                 sameSite: 'lax',
                 path: '/'
             });
+
 
             response.json({ user: user, message: 'User authenticated' });
         } catch (error) {
