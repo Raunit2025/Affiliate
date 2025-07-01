@@ -60,7 +60,11 @@ function Register() {
         dispatch({ type: SET_USER, payload: response.data });
       } catch (error) {
         console.error(error);
-        setErrors({ message: 'Registration failed' });
+        setErrors({
+          message:
+            error.response?.data?.message || 'Registration failed',
+        });
+
       }
     }
   };
@@ -91,8 +95,14 @@ function Register() {
         {errors.message && (
           <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-sm">
             {errors.message}
+            {errors.message.toLowerCase().includes('already') && (
+              <a href="/login" className="underline text-blue-600 hover:text-blue-800 ml-1">
+                Go to login
+              </a>
+            )}
           </div>
         )}
+
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -105,9 +115,8 @@ function Register() {
               id="name"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${errors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
           </div>
@@ -122,9 +131,8 @@ function Register() {
               id="username"
               value={formData.username}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${
-                errors.username ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${errors.username ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
           </div>
@@ -139,9 +147,8 @@ function Register() {
               id="password"
               value={formData.password}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring ${errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>

@@ -72,47 +72,48 @@ const authController = {
     },
 
     register: async (request, response) => {
-        try {
-            // Extract attributes from the request body
-            const { username, password, name } = request.body;
+  try {
+    const { username, password, name } = request.body;
 
-            // Firstly check if user already exist with the given email
-            const data = await Users.findOne({ email: username });
-            if (data) {
-                return response.status(401)
-                    .json({ message: 'Account already exist with given email' });
-            }
+    const data = await Users.findOne({ email: username });
+    if (data) {
+      return response.status(409).json({ message: 'Account already exists with given email' });
+    }
 
-            // Encrypt the password before saving the record to the database
-            const encryptedPassword = await bcrypt.hash(password, 10);
+    const encryptedPassword = await bcrypt.hash(password, 10);
 
-            // Create mongoose model object and set the record values
-            const user = new Users({
-                email: username,
-                password: encryptedPassword,
-                name: name
-            });
-            await user.save();
-            const userDetails = {
-                id: user._id,
-                name: user.name,
-                email: user.email
-            };
-            const token = jwt.sign(userDetails, secret, {
-                expiresIn: '1h'
-            });
-            response.cookie('jwtToken', token, {
-                httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
-            });
-            response.json({ message: 'User registered', user: userDetails });
-        } catch (error) {
-            console.log(error);
-            return response.status(500).json({ error: 'Internal Server Error' });
-        }
-    },
+    const user = new Users({
+      email: username,
+      password: encryptedPassword,
+      name: name
+    });
+
+    await user.save();
+
+    const userDetails = {
+      id: user._id,
+      name: user.name,
+      email: user.email
+    };
+
+    const token = jwt.sign(userDetails, secret, {
+      expiresIn: '1h'
+    });
+
+    response.cookie('jwtToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // ✅ only secure in prod
+      sameSite: 'lax',
+      path: '/'
+    });
+
+    response.json({ message: 'User registered', user: userDetails });
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({ error: 'Internal Server Error' });
+  }
+},
+
 
     googleAuth: async (request, response) => {
         try {
