@@ -5,6 +5,8 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const cors = require('cors');
 
+const userRoutes = require('./src/routes/userRoutes');
+
 const authRoutes = require('./src/routes/authRoutes');
 const linksRoutes = require('./src/routes/linksRoutes');
 
@@ -40,6 +42,7 @@ app.use(
 
 app.use('/auth', authRoutes);
 app.use('/links', linksRoutes);
+app.use('/users', userRoutes);
 
 const PORT = 5001;
 app.listen(PORT, () => {

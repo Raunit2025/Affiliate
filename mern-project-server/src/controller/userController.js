@@ -1,6 +1,8 @@
 const { USER_ROLE } = require("../constants/userConstants");
 const bcrypt = require('bcryptjs');
 const Users = require("../model/Users");
+const send = require("../service/emailService");
+
 const generateTemporaryPassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyz123456789';
     let result = '';
@@ -55,6 +57,60 @@ const userController = {
             });
         }
 
+    },
+
+    update: async (request, response) => {
+        try{
+            const {id} = request.params;
+            const {name, role} = request.body;
+
+            if(role && !USER_ROLE.includes(role)){
+                return response.status(400).json({
+                    message: 'Invalid role'
+                });
+            }
+
+            const user = await Users.find({ _id: id, adminId: request.user.id });
+            if(!user) {
+                return response.status(400).json({
+                    message: "User does not exist"
+                });
+            }
+
+            if(name) user.name = name;
+            if(role) user.role = role;
+
+            await user.save();
+            response.json(user);
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({
+                message: 'Internal server error'
+            })
+
+        }
+    },
+
+    delete: async (request, response) => {
+        try{
+            const {id} = request.params;
+            const user = await Users.findByIdAndDelete({
+                _id: id,
+                admiId: request.user.id
+            });
+
+            if(!user) {
+                return response.status(404).json({
+                    message: 'User does not exist'
+                });
+            }
+
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
     },
 };
 
