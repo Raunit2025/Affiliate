@@ -36,7 +36,6 @@ function LinksDashboard() {
   const userDetails = useSelector((state) => state.userDetails);
   const [userChecked, setUserChecked] = useState(false);
 
-  // Watch for userDetails change
   useEffect(() => {
     setUserChecked(true);
   }, [userDetails]);
