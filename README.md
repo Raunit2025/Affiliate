@@ -1,10 +1,5 @@
 # 🧩 Affiliate++ – Affiliate Link Sharing & Management Platform
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Status](https://img.shields.io/badge/status-in%20development-yellow)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
-![Made With](https://img.shields.io/badge/Made%20with-MERN-blue)
-
 > A web-based SaaS platform to create, organize, and track affiliate links with analytics and campaign management.
 
 ---
