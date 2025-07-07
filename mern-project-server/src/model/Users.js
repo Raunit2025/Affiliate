@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const subscriptionSchema = new mongoose.Schema({
     id: {type : String}, //Razorpay subscription ID
+    planId: {type: String},
     status: { type: String, default: 'pending'},
     start: {type: Date},
     end: {type: Date},

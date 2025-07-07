@@ -3,6 +3,9 @@ const {CREDIT_PACKS, PLAN_IDS} = require("../constants/paymentConstants");
 const crypto = require('crypto');
 const Users = require('../model/Users');
 const { default: subscriptions } = require('razorpay/dist/types/subscriptions');
+const { response } = require('express');
+const { use } = require('react');
+const { log } = require('console');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -96,7 +99,50 @@ const paymentController = {
                 message: 'Internal server error'
             });
         }
-    }
+    },
+    verifySubscription: async (request, response) => {
+        try{
+            const { subscription_id } = request.body;
+            const subscription = await razorpay.subscriptions.fetch(subscription_id);
+            const user =  await Users.findById({ _id: request.user.id });
+
+            //We'll use this entry to prevent user from subscribing again
+            //from the UI, while we wait for activated event from razorpay.
+            user.subscription = {
+                id: subscription_id,
+                planId: subscription.plan_id,
+                status: subscription.status
+            };
+            await use.save();
+            response.json({ user: user});
+
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    },
+
+    cancelSubscription : async (request, response) => {
+        try {
+            const { subscription_id} = request.body;
+
+            if(!subscription_id) {
+                return response.status(400).json({
+                    message: 'Subscription ID is mandatory'
+                });
+            }
+
+            const data = await razorpay.subscriptions.cancel(subscription_id);
+            response.json({ data: data });
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    },
 };
 
 module.exports = paymentController;
