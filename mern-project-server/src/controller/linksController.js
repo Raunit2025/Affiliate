@@ -1,18 +1,33 @@
 const Links = require("../model/Links");
+const Users = require("../model/Users");
 
 const linksController = {
     create: async (request, response) => {
         const { campaign_title, original_url, category } = request.body;
 
         try {
+            // We're fetching user details from DB even though we have
+            // it available in request object. The reason is critical operation.
+            // We're dealing with money and we want to pull latest information
+            // whenever we're transacting.
+            const user = await Users.findById({ _id: request.user.id });
+            if (user.credits < 1) {
+                return response.status(400).json({
+                    message: 'Insufficient credit balance'
+                });
+            }
+
             const link = new Links({
                 campaignTitle: campaign_title,
                 originalUrl: original_url,
                 category: category,
-                user: request.user.id === 'admin' ? 
-                    request.user.id: request.user.admiId // Coming from middleware; AuthMiddleware
+                user: request.user.role === 'admin' ?
+                    request.user.id : request.user.adminId
             });
-            link.save();
+            await link.save();
+
+            user.credits -= 1;
+            await user.save();
             response.json({
                 data: { linkId: link._id }
             });
@@ -26,10 +41,10 @@ const linksController = {
 
     getAll: async (request, response) => {
         try {
-            const userId = request.user.role === 'admin' ? 
+            const userId = request.user.role === 'admin' ?
                 request.user.id : request.user.adminId;
             const links = await Links
-                .find({ user: request.user.id })
+                .find({ user: userId })
                 .sort({ createdAt: -1 });
             response.json({ data: links });
         } catch (error) {
@@ -53,7 +68,8 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
-            const userId = request.user.role === 'admin' ? 
+
+            const userId = request.user.role === 'admin' ?
                 request.user.id : request.user.adminId;
             // Make sure the link indeed belong to the logged in user.
             if (link.user.toString() !== userId) {
@@ -84,7 +100,8 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
-            const userId = request.user.role === 'admin' ? 
+
+            const userId = request.user.role === 'admin' ?
                 request.user.id : request.user.adminId;
             // Make sure the link indeed belong to the logged in user.
             if (link.user.toString() !== userId) {
@@ -123,7 +140,8 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
-            const userId = request.user.role === 'admin' ? 
+
+            const userId = request.user.role === 'admin' ?
                 request.user.id : request.user.adminId;
             // Make sure the link indeed belong to the logged in user.
             if (link.user.toString() !== userId) {

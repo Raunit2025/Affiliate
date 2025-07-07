@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const send = async (toString, InvalidSubjectTokenError, body) => {
+const send = async (to, subject, body) => {
     const emailOptions = {
         from: process.env.GMAIL_EMAIL_ID,
         to: to,

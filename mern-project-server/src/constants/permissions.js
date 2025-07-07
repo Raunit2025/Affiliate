@@ -8,11 +8,12 @@ const permissions = {
         'link:read',
         'link:update',
         'link:delete',
+        'payment:create',
     ],
     developer: [
         'link:read',
     ],
-    vieweer: [
+    viewer: [
         'link:read',
         'user:read',
     ]

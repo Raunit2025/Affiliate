@@ -1,10 +1,10 @@
-const { USER_ROLE } = require("../constants/userConstants");
+const { USER_ROLES } = require("../constants/userConstants");
 const bcrypt = require('bcryptjs');
 const Users = require("../model/Users");
 const send = require("../service/emailService");
 
 const generateTemporaryPassword = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz123456789';
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for (let i = 0; i < 6; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -17,26 +17,30 @@ const userController = {
         try {
             const { name, email, role } = request.body;
 
-            if (!USER_ROLE.includes(role)) {
+            if (!USER_ROLES.includes(role)) {
                 return response.status(400).json({
                     message: 'Invalid role'
                 });
             }
+
             const temporaryPassword = generateTemporaryPassword();
-            const hashPassword = await bcrypt.hash(temporaryPassword, 10);
+            const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
             const user = await Users.create({
                 email: email,
-                password: password,
+                password: hashedPassword,
                 name: name,
+                role: role,
                 adminId: request.user.id
             });
 
             try {
-                await send(email, 'Affiliate++ Temporary Password', `Your Temporary password is ${temporaryPassword}`);
+                await send(email, 'Affiliate++ Temporary Password',
+                    `Your temporary password is ${temporaryPassword}`);
             } catch (error) {
                 console.log(error);
                 console.log(`Error sending password: ${temporaryPassword}`);
             }
+
             response.json(user);
         } catch (error) {
             console.log(error);
@@ -56,55 +60,54 @@ const userController = {
                 message: 'Internal server error'
             });
         }
-
     },
 
     update: async (request, response) => {
-        try{
-            const {id} = request.params;
-            const {name, role} = request.body;
+        try {
+            const { id } = request.params;
+            const { name, role } = request.body;
 
-            if(role && !USER_ROLE.includes(role)){
+            if (role && !USER_ROLES.includes(role)) {
                 return response.status(400).json({
                     message: 'Invalid role'
                 });
             }
 
-            const user = await Users.find({ _id: id, adminId: request.user.id });
-            if(!user) {
-                return response.status(400).json({
-                    message: "User does not exist"
+            const user = await Users.findOne({ _id: id, adminId: request.user.id });
+            if (!user) {
+                return response.status(404).json({
+                    message: 'User does not exist'
                 });
             }
+            console.log(user);
 
-            if(name) user.name = name;
-            if(role) user.role = role;
+            if (name) user.name = name;
+            if (role) user.role = role;
 
             await user.save();
             response.json(user);
         } catch (error) {
             console.log(error);
             response.status(500).json({
-                message: 'Internal server error'
+                message: 'Internal server errror'
             })
-
         }
     },
 
     delete: async (request, response) => {
-        try{
-            const {id} = request.params;
+        try {
+            const { id } = request.params;
+
             const user = await Users.findByIdAndDelete({
                 _id: id,
-                admiId: request.user.id
+                adminId: request.user.id
             });
 
-            if(!user) {
-                return response.status(404).json({
-                    message: 'User does not exist'
-                });
+            if (!user) {
+                return response.status(404).json({ message: 'User does not exist' });
             }
 
+            response.json({ message: 'User deleted' });
         } catch (error) {
             console.log(error);
             response.status(500).json({

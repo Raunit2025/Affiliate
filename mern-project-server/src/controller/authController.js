@@ -9,117 +9,116 @@ const secret = process.env.JWT_SECRET;
 
 const authController = {
     login: async (request, response) => {
-  try {
-    const errors = validationResult(request);
-    if (!errors.isEmpty()) {
-      return response.status(401).json({ errors: errors.array() });
-    }
+        try {
+            const errors = validationResult(request);
+            if (!errors.isEmpty()) {
+                return response.status(401).json({ errors: errors.array() });
+            }
 
-    const { username, password } = request.body;
+            // The body contains username and password because of the express.json()
+            // middleware configured in the server.js
+            const { username, password } = request.body;
 
-    const data = await Users.findOne({ email: username });
-    if (!data) {
-      return response.status(401).json({ message: 'Invalid credentials' });
-    }
+            // Call Database to fetch user by the email
+            const data = await Users.findOne({ email: username });
+            if (!data) {
+                return response.status(401).json({ message: 'Invalid credentials ' });
+            }
 
-    const isMatch = await bcrypt.compare(password, data.password);
-    if (!isMatch) {
-      return response.status(401).json({ message: 'Invalid credentials' });
-    }
+            const isMatch = await bcrypt.compare(password, data.password);
+            if (!isMatch) {
+                return response.status(401).json({ message: 'Invalid credentials ' });
+            }
 
-    const user = {
-      id: data._id,
-      name: data.name,
-      email: data.email,
-      role: data.role ? data.role : 'admin'
-    };
+            const user = {
+                id: data._id,
+                name: data.name,
+                email: data.email,
+                role: data.role ? data.role : 'admin',
+                adminId: data.adminId,
+                credits: data.credits
+            };
 
-    // ✅ Generate JWT token
-    const token = jwt.sign(user, secret, { expiresIn: '1h' });
-
-    // ✅ Set secure cookie correctly
-    response.cookie('jwtToken', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // optional: persist 7 days
-    });
-
-    // ✅ Send response
-    response.json({ user: user, message: 'User authenticated' });
-  } catch (error) {
-    console.log(error);
-    response.status(500).json({ error: 'Internal server error' });
-  }
-},
-
+            const token = jwt.sign(user, secret, { expiresIn: '1h' });
+            response.cookie('jwtToken', token, {
+                httpOnly: true,
+                secure: true,
+                domain: 'localhost',
+                path: '/'
+            });
+            response.json({ user: user, message: 'User authenticated' });
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({ error: 'Internal server error' });
+        }
+    },
 
     logout: (request, response) => {
         response.clearCookie('jwtToken');
         response.json({ message: 'Logout successfull' });
     },
 
-    isUserLoggedIn: (request, response) => {
+    isUserLoggedIn: async (request, response) => {
         const token = request.cookies.jwtToken;
 
         if (!token) {
             return response.status(401).json({ message: 'Unauthorized access' });
         }
 
-        jwt.verify(token, secret, (error, user) => {
+        jwt.verify(token, secret, async (error, user) => {
             if (error) {
                 return response.status(401).json({ message: 'Unauthorized access' });
             } else {
-                response.json({ message: 'User is logged in', user: user });
+                const latestUserDetails = await Users.findById({ _id: user.id });
+                response.json({ message: 'User is logged in', user: latestUserDetails });
             }
         });
     },
 
     register: async (request, response) => {
         try {
+            // Extract attributes from the request body
             const { username, password, name } = request.body;
 
+            // Firstly check if user already exist with the given email
             const data = await Users.findOne({ email: username });
             if (data) {
-                return response.status(409).json({ message: 'Account already exists with given email' });
+                return response.status(401)
+                    .json({ message: 'Account already exist with given email' });
             }
 
+            // Encrypt the password before saving the record to the database
             const encryptedPassword = await bcrypt.hash(password, 10);
 
+            // Create mongoose model object and set the record values
             const user = new Users({
                 email: username,
                 password: encryptedPassword,
-                name: name
+                name: name,
+                role: 'admin'
             });
-
             await user.save();
-
             const userDetails = {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: data.role ? data.role: 'admin'
+                role: user.role,
+                credits: user.credits
             };
-
-            const token = jwt.sign(userDetails, secret, {
-                expiresIn: '1h'
-            });
+            const token = jwt.sign(userDetails, secret, { expiresIn: '1h' });
 
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', 
-                sameSite: 'lax',
+                secure: true,
+                domain: 'localhost',
                 path: '/'
             });
-
             response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
             console.log(error);
             return response.status(500).json({ error: 'Internal Server Error' });
         }
     },
-
 
     googleAuth: async (request, response) => {
         try {
@@ -143,7 +142,8 @@ const authController = {
                     email: email,
                     name: name,
                     isGoogleUser: true,
-                    googleId: googleId
+                    googleId: googleId,
+                    role: 'admin'
                 });
                 await data.save();
             }
@@ -152,17 +152,17 @@ const authController = {
                 id: data._id ? data._id : googleId,
                 username: email,
                 name: name,
-                role: data.role ? data.role: 'admin' //This is the ensure backward compatibility
+                role: data.role ? data.role : 'admin', // This is the ensure backward compatibility
+                credits: data.credits
             };
 
+            const token = jwt.sign(user, secret, { expiresIn: '1h' });
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', 
-                sameSite: 'lax',
+                secure: true,
+                domain: 'localhost',
                 path: '/'
             });
-
-
             response.json({ user: user, message: 'User authenticated' });
         } catch (error) {
             console.log(error);
