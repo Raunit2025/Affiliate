@@ -4,7 +4,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const authorize = require('../middleware/authorizeMiddleware');
 const paymentController = require('../controller/paymentController');
 
-route.post('/webhook', express.raw({type: 'application/json' }),
+router.post('/webhook', express.raw({type: 'application/json' }),
     paymentController.handleWebhookEvent);
 
 router.use(authMiddleware.protect);

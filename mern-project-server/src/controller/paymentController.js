@@ -2,10 +2,7 @@ const Razorpay = require('razorpay');
 const { CREDIT_PACKS, PLAN_IDS } = require("../constants/paymentConstants");
 const crypto = require('crypto');
 const Users = require('../model/Users');
-const { default: subscriptions } = require('razorpay/dist/types/subscriptions');
-const { response } = require('express');
-const { use } = require('react');
-const { log } = require('console');
+const {request} =  require('http');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -197,16 +194,16 @@ const paymentController = {
                         'subscription.id': razorpaySubscriptionId,
                         'subscription.status': newStatus,
                         'subscription.planId': subscriptionData.plan_id,
-                        'subscription.start': subscriptionData.start_at
+                        'subscription:start': subscriptionData.start_at
                             ? new Date(subscriptionData.start_at * 1000)
                             : null,
-                        'subscription.end': subscriptionData.end_at
+                        'subscription:end': subscriptionData.end_at
                             ? new Date(subscriptionData.end_at * 1000)
                             : null,
-                        'subscription.lastBillDate': subscriptionData.current_start
+                        'subscription:lastBillDate': subscriptionData.current_start
                             ? new Date(subscriptionData.current_start * 1000)
                             : null,
-                        'subscription.nextBillDate': subscriptionData.current_end
+                        'subscription:nextBillDate': subscriptionData.current_end
                             ? new Date(subscriptionData.current_end * 1000)
                             : null,
                         'subscription:paymentsMade': subscriptionData.paid_count,
