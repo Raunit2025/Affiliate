@@ -62,10 +62,11 @@ function Login() {
   const handleGoogleSuccess = async (authResponse) => {
     try {
       const response = await axios.post(`${serverEndpoint}/auth/google-auth`, {
-        idToken: authResponse.credential
+        credential: authResponse.credential
       }, {
         withCredentials: true
       });
+
       dispatch({ type: SET_USER, payload: response.data.user });
     } catch (error) {
       console.error(error);
@@ -77,8 +78,9 @@ function Login() {
     console.error(error);
     setErrors({ message: 'Error in Google authorization flow, please try again' });
   };
-
+  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
   return (
+
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <div className="w-full max-w-md bg-white rounded shadow p-6">
         <h2 className="text-2xl font-semibold text-center mb-6">Sign in to Continue</h2>
@@ -100,9 +102,8 @@ function Login() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring ${
-                errors.username ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring ${errors.username ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
           </div>
@@ -117,9 +118,8 @@ function Login() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full border px-3 py-2 rounded focus:outline-none focus:ring ${errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>
@@ -140,6 +140,7 @@ function Login() {
 
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
           <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+
         </GoogleOAuthProvider>
       </div>
     </div>

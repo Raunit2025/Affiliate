@@ -1,5 +1,7 @@
 const Links = require("../model/Links");
 const Users = require("../model/Users");
+const axios = require('axios');
+const { getDeviceInfo } = require("../util/linkUtil");
 
 const linksController = {
     create: async (request, response) => {
@@ -182,6 +184,36 @@ const linksController = {
                 return response.status(404)
                     .json({ error: 'LinkID does not exist' });
             }
+
+            const isDevelopment = process.env.NODE_ENV === 'development';
+            isDevelopment ? '8.8.8.8' 
+            : request.headers['x-forward-for']?.split(',')[0] 
+            || request.socket.remoteAddress;
+
+            const geoResponse = await axios.get(`http://ip-api.com/json/${idAddress}`);
+            const {city, country, region, lat, lon, isp } = geoResponse.data;
+
+            const userAgent = request.headers['user-agent'] || 'unknown';
+            const {isMobile, browser } = getDeviceInfo(userAgent);
+            const deviceType = isMobile ? 'Mobile' : 'Desktop';
+
+            const referrer = request.get('Refferrer') || null;
+
+            await Clicks.create({
+                linkId: link._id,
+                ip: ipAddress,
+                city: city,
+                country: country,
+                region: region,
+                latitude: lat,
+                longitude: lon,
+                isp: isp,
+                referrer: refferrer,
+                userAgent: userAgent,
+                deviceType: deviceType,
+                browser: browser,
+                clickedAt: new Date()
+            });
 
             link.clickCount += 1;
             await link.save();

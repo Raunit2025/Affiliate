@@ -1,52 +1,45 @@
 require('dotenv').config();
+const express = require('express');
 const mongoose = require('mongoose');
-const express = require('express'); // Include the express module
+const cors = require('cors');
 const cookieParser = require('cookie-parser');
+
 const authRoutes = require('./src/routes/authRoutes');
 const linksRoutes = require('./src/routes/linksRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
-const cors = require('cors');
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB Connected'))
-    .catch((error) => console.log(error));
+const app = express();
 
-const app = express(); // Instantiate express app.
+// ✅ CORRECT CORS SETUP
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
 
-app.use((request, response, next) => {
-    // Skip json middleware for the webhook endpoint
-    if(request.originalUrl.startsWith('/payments/webhook')) {
-        next();
-    }
-
-    express.json()(request, response, next);
+// ✅ JSON Body Parsing
+app.use((req, res, next) => {
+  if (req.originalUrl === '/payments/webhook') {
+    next(); // skip json parsing
+  } else {
+    express.json()(req, res, next);
+  }
 });
 
-app.use((request, next) => {
-    if(request.originalUrl.startsWith('/payments/webhook')){
-        next();
-    }
-
-    express.json()(request, response, next);
-});
 app.use(cookieParser());
 
-const corsOptions = {
-    origin: process.env.CLIENT_ENDPOINT,
-    credentials: true
-};
-app.use(cors(corsOptions));
+// ✅ Register routes
 app.use('/auth', authRoutes);
 app.use('/links', linksRoutes);
 app.use('/users', userRoutes);
 app.use('/payments', paymentRoutes);
 
+// ✅ Connect DB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch((error) => console.log(error));
+
 const PORT = 5001;
-app.listen(5001, (error) => {
-    if (error) {
-        console.log('Error starting the server: ', error);
-    } else {
-        console.log(`Server is running at http://localhost:${PORT}`);
-    }
+app.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
 });
