@@ -229,6 +229,36 @@ const linksController = {
     },
     analytics: async (request, response) => {
         try{
+            const { linkId, from, to } = request.query;
+
+            const link = await Links.findById({ _id: linkId });
+            if(!link) {
+
+                return response.status(404).json({
+                    error: 'Link not found'
+                });
+            }
+
+            const userId = request.user.role === 'admin'
+                ?request.user.id
+                :request.user.addminId
+            if(link.user.toString() !== userId) {
+                return response.status(403).json({
+                    error:'Unauthorized'
+                });
+            }
+
+            const query = {
+                linkId: linkId
+            };
+
+            if(from && to) {
+                query.clickAt = { $get: new Date(), $lte: new Date(to) };
+
+            }
+
+            const data = await Clicks.find(query).sort({ clickedAt: -1 });
+            response.json(data);
 
         } catch (error) {
             console.log(error);
