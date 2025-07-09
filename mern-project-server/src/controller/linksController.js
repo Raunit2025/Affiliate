@@ -2,6 +2,7 @@ const Links = require("../model/Links");
 const Users = require("../model/Users");
 const axios = require('axios');
 const { getDeviceInfo } = require("../util/linkUtil");
+const { response } = require("express");
 
 const linksController = {
     create: async (request, response) => {
@@ -226,6 +227,16 @@ const linksController = {
             });
         }
     },
+    analytics: async (request, response) => {
+        try{
+
+        } catch (error) {
+            console.log(error);
+            return response.status(500).json({
+                message: 'Internal server error'
+            });
+        }
+    }
 };
 
 module.exports = linksController;
