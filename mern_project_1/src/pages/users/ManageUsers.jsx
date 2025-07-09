@@ -12,18 +12,15 @@ const USER_ROLES = ['viewer', 'developer'];
 function ManageUsers() {
     const [errors, setErrors] = useState({});
     const [usersData, setUsersData] = useState([]);
-    const [formData, setFormData] = useState({
-        email: '',
-        name: '',
-        role: ''
-    });
+    const [formData, setFormData] = useState({ email: '', name: '', role: '' });
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [loading, setLoading] = useState(false);
     const [formLoading, setFormLoading] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const handleModalShow = (isEdit, data = {}) => {
-        if (isEdit) {
+    const handleModalShow = (editMode, data = {}) => {
+        if (editMode) {
             setFormData({
                 id: data._id,
                 email: data.email,
@@ -31,46 +28,28 @@ function ManageUsers() {
                 name: data.name
             });
         } else {
-            setFormData({
-                email: '',
-                role: '',
-                name: ''
-            });
+            setFormData({ email: '', role: '', name: '' });
         }
-        setIsEdit(isEdit);
+        setIsEdit(editMode);
         setShowModal(true);
     };
 
-    const handleModalClose = () => {
-        setShowModal(false);
-    };
-
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const handleModalClose = () => setShowModal(false);
 
     const handleDeleteModalShow = (userId) => {
-        setFormData({
-            id: userId
-        });
+        setFormData({ id: userId });
         setShowDeleteModal(true);
     };
 
-    const handleDeleteModalClose = () => {
-        setShowDeleteModal(false);
-    };
+    const handleDeleteModalClose = () => setShowDeleteModal(false);
 
     const handleDeleteSubmit = async () => {
         try {
             setFormLoading(true);
-            await axios.delete(
-                `${serverEndpoint}/users/${formData.id}`,
-                { withCredentials: true });
-            setFormData({
-                email: '',
-                role: '',
-                name: ''
-            });
+            await axios.delete(`${serverEndpoint}/users/${formData.id}`, { withCredentials: true });
+            setFormData({ email: '', role: '', name: '' });
             fetchUsers();
-        } catch (error) {
+        } catch {
             setErrors({ message: 'Something went wrong, please try again' });
         } finally {
             handleDeleteModalClose();
@@ -78,86 +57,66 @@ function ManageUsers() {
         }
     };
 
-    const handleChange = (event) => {
-        const name = event.target.name;
-        const value = event.target.value;
-
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
     const validate = () => {
-        let newErrors = {};
+        const newErrors = {};
         let isValid = true;
-        if (formData.email.length === 0) {
+
+        if (!formData.email) {
             newErrors.email = "Email is mandatory";
             isValid = false;
         }
-
-        if (formData.role.length === 0) {
-            newErrors.role = "Role is mandatory";
+        if (!formData.name) {
+            newErrors.name = "Name is mandatory";
             isValid = false;
         }
-
-        if (formData.name.length === 0) {
-            newErrors.name = "Name is mandatory";
+        if (!formData.role) {
+            newErrors.role = "Role is mandatory";
             isValid = false;
         }
 
         setErrors(newErrors);
         return isValid;
-    }
+    };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validate()) return;
 
-        if (validate()) {
-            setFormLoading(true);
-            const body = {
-                email: formData.email,
-                name: formData.name,
-                role: formData.role
-            };
-            const configuration = {
-                withCredentials: true
-            };
-            try {
-                if (isEdit) {
-                    await axios.put(
-                        `${serverEndpoint}/users/${formData.id}`,
-                        body, configuration);
-                } else {
-                    await axios.post(
-                        `${serverEndpoint}/users`,
-                        body, configuration);
-                }
+        setFormLoading(true);
+        const body = {
+            email: formData.email,
+            name: formData.name,
+            role: formData.role
+        };
 
-                setFormData({
-                    email: '',
-                    name: '',
-                    role: ''
-                });
-                fetchUsers();
-            } catch (error) {
-                setErrors({ message: 'Something went wrong, please try again' });
-            } finally {
-                handleModalClose();
-                setFormLoading(false);
+        try {
+            if (isEdit) {
+                await axios.put(`${serverEndpoint}/users/${formData.id}`, body, { withCredentials: true });
+            } else {
+                await axios.post(`${serverEndpoint}/users`, body, { withCredentials: true });
             }
+
+            setFormData({ email: '', name: '', role: '' });
+            fetchUsers();
+        } catch {
+            setErrors({ message: 'Something went wrong, please try again' });
+        } finally {
+            handleModalClose();
+            setFormLoading(false);
         }
     };
 
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${serverEndpoint}/users`, {
-                withCredentials: true
-            });
-            setUsersData(response.data);
-        } catch (error) {
-            console.log(error);
+            const { data } = await axios.get(`${serverEndpoint}/users`, { withCredentials: true });
+            setUsersData(data);
+        } catch {
             setErrors({ message: 'Unable to fetch users at the moment, please try again' });
         } finally {
             setLoading(false);
@@ -175,11 +134,11 @@ function ManageUsers() {
         {
             field: 'action', headerName: 'Action', flex: 1, renderCell: (params) => (
                 <>
-                    <IconButton>
-                        <EditIcon onClick={() => handleModalShow(true, params.row)} />
+                    <IconButton onClick={() => handleModalShow(true, params.row)}>
+                        <EditIcon />
                     </IconButton>
-                    <IconButton>
-                        <DeleteIcon onClick={() => handleDeleteModalShow(params.row._id)} />
+                    <IconButton onClick={() => handleDeleteModalShow(params.row._id)}>
+                        <DeleteIcon />
                     </IconButton>
                 </>
             )
@@ -188,16 +147,13 @@ function ManageUsers() {
 
     return (
         <div className="container py-4">
-
             <div className="d-flex justify-content-between mb-3">
                 <h2>Manage Users</h2>
                 <button className='btn btn-primary btn-sm' onClick={() => handleModalShow(false)}>Add</button>
             </div>
 
             {errors.message && (
-                <div className="alert alert-danger" role="alert">
-                    {errors.message}
-                </div>
+                <div className="alert alert-danger" role="alert">{errors.message}</div>
             )}
 
             <div style={{ height: 500, width: '100%' }}>
@@ -206,23 +162,19 @@ function ManageUsers() {
                     rows={usersData}
                     columns={columns}
                     initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 20, page: 0 },
-                        },
+                        pagination: { paginationModel: { pageSize: 20, page: 0 } }
                     }}
                     pageSizeOptions={[20, 50, 100]}
                     disableRowSelectionOnClick
-                    showToolbar
-                    sx={{
-                        fontFamily: 'inherit'
-                    }}
+                    sx={{ fontFamily: 'inherit' }}
                     loading={loading}
                 />
             </div>
 
+            {/* Add/Edit Modal */}
             <Modal show={showModal} onHide={handleModalClose}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{isEdit ? (<>Edit User</>) : (<>Add User</>)}</Modal.Title>
+                    <Modal.Title>{isEdit ? 'Edit User' : 'Add User'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <form onSubmit={handleSubmit}>
@@ -236,11 +188,7 @@ function ManageUsers() {
                                 value={formData.email}
                                 onChange={handleChange}
                             />
-                            {errors.email && (
-                                <div className="invalid-feedback">
-                                    {errors.email}
-                                </div>
-                            )}
+                            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                         </div>
 
                         <div className="mb-3">
@@ -253,76 +201,57 @@ function ManageUsers() {
                                 value={formData.name}
                                 onChange={handleChange}
                             />
-                            {errors.name && (
-                                <div className="invalid-feedback">
-                                    {errors.name}
-                                </div>
-                            )}
+                            {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                         </div>
 
                         <div className="mb-3">
                             <label htmlFor="role" className="form-label">Role</label>
-                            <select name="role" value={formData.role}
+                            <select
+                                name="role"
+                                value={formData.role}
                                 onChange={handleChange}
                                 className={`form-control ${errors.role ? 'is-invalid' : ''}`}
                             >
-                                <option key="select" value="">
-                                    Select
-                                </option>
+                                <option value="">Select</option>
                                 {USER_ROLES.map((role) => (
                                     <option key={role} value={role}>
                                         {role.charAt(0).toUpperCase() + role.slice(1)}
                                     </option>
                                 ))}
                             </select>
-                            {errors.role && (
-                                <div className="invalid-feedback">
-                                    {errors.role}
-                                </div>
-                            )}
+                            {errors.role && <div className="invalid-feedback">{errors.role}</div>}
                         </div>
 
                         <div className="d-grid">
                             {formLoading ? (
-                                <button className="btn btn-primary" type="button" disabled="">
+                                <button className="btn btn-primary" type="button" disabled>
                                     <span className="spinner-border spinner-border-sm" aria-hidden="true" />
-                                    <span className="visually-hidden" role="status">
-                                        Loading...
-                                    </span>
+                                    <span className="visually-hidden">Loading...</span>
                                 </button>
                             ) : (
                                 <button type="submit" className="btn btn-primary">Submit</button>
                             )}
-
                         </div>
                     </form>
                 </Modal.Body>
             </Modal>
 
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal()}>
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={handleDeleteModalClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>Confirm Delete</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to delete this link?
-                </Modal.Body>
+                <Modal.Body>Are you sure you want to delete this user?</Modal.Body>
                 <Modal.Footer>
-                    <button className="btn btn-secondary" onClick={() => setShowDeleteModal()}>
-                        Cancel
-                    </button>
+                    <button className="btn btn-secondary" onClick={handleDeleteModalClose}>Cancel</button>
                     {formLoading ? (
-                        <button className="btn btn-danger" type="button" disabled="">
+                        <button className="btn btn-danger" type="button" disabled>
                             <span className="spinner-border spinner-border-sm" aria-hidden="true" />
-                            <span className="visually-hidden" role="status">
-                                Loading...
-                            </span>
+                            <span className="visually-hidden">Loading...</span>
                         </button>
                     ) : (
-                        <button className="btn btn-danger" onClick={handleDeleteSubmit}>
-                            Delete
-                        </button>
+                        <button className="btn btn-danger" onClick={handleDeleteSubmit}>Delete</button>
                     )}
-
                 </Modal.Footer>
             </Modal>
         </div>
