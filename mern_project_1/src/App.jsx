@@ -15,6 +15,7 @@ import UserLayout from "./layout/UserLayout";
 
 import { serverEndpoint } from "./config/config";
 import { SET_USER } from "./redux/user/actions";
+import AnalyticsDashboard from "./pages/links/AnalyticsDashboard";
 
 function App() {
   const dispatch = useDispatch();
@@ -127,6 +128,12 @@ function App() {
           )
         }
       />
+      <Route path="/analytics/:id" element={userDetails ?
+        <UserLayout>
+          <AnalyticsDashboard />
+        </UserLayout> :
+        <Navigate to ="/login"/>
+      } />
     </Routes>
   );
 }
