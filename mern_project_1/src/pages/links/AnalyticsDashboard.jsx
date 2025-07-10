@@ -6,7 +6,6 @@ import { useState } from "react";
 import { DataGrid } from '@mui/x-data-grid'
 import { Bar, Pie } from 'react-chartjs-2';
 import DatePicker from 'react-datepicker';
-import DatePicker from "react-datepicker";
 import 'react-datepicker/dist/react-datepicker.css';4
 import {
     Chart as ChartJS,
@@ -100,11 +99,75 @@ function AnalyticsDashboard() {
 
     useEffect(() => {
         fetchAnalytics();
-    }, []);
+    }, [analyticsData, fromDate, toDate]);
 
     return (
         <div className="container py-5">
             <h1>Analytics for LinkID: {id}</h1>
+            <div className="row mb-4 mx-0 border py-3 border">
+                <h5>Filters:</h5>
+                <div className="col-md-2">
+                    <DatePicker 
+                        selected={fromDate}
+                        onChange={(date) => setFromDate(date)}
+                        className="form-control"
+                        placeholderText="From (Date)"
+                    />
+                </div>
+                <div className="col-md-2">
+                    <DatePicker 
+                        selected={toDate}
+                        onChange={(date) => setToDate(date)}
+                        className="form-control"
+                        placeholderText="To (Date)"
+                    />
+                </div>
+            </div>
+
+            <div className="row mb-4 mx-0 border py-3 rounded">
+                <div className="col-md-8 p-3 rounded mt-2">
+                    <h5>Click by City</h5>
+                    <hr />
+                    <Bar 
+                        data={{
+                            labels: Object.keys(clicksByCity),
+                            datasets: [
+                                {
+                                    label: 'Clicks',
+                                    data: Object.values(clicksByCity),
+                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                }
+                            ]
+                        }}
+                        options={{ responsive: true }}
+                        />
+                </div>
+                <div className="col-md-4 p-3, rounded mt-2">
+                    <h5>Clicks by Browser</h5>
+                    <hr />
+                    <Pie
+                        data={{
+                            labels:  Object.keys(clicksByBrowser),
+                            datasets: [
+                                {
+                                    data: Object.values(clickByBrowser),
+                                    backgroundColor: [
+                                        '#FF6384',
+                                        '#36A2EB', 
+                                        '#FFCE56', 
+                                        '#4BC0C0', 
+                                        '#9966FF', 
+                                        '#FF9F40',
+                                    ],
+                                }
+                            ]
+                        }}
+                        options={{ responsive: true }}
+                        />
+                </div>
+
+            </div>
+
             <DataGrid
                 getRowId={(row) => row._id}
                 rows={analyticsData}

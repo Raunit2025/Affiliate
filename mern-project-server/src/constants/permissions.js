@@ -19,4 +19,4 @@ const permissions = {
     ]
 };
 
-module.exports = permissions;
+module.exports = {permissions};
