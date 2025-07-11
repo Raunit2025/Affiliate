@@ -15,15 +15,16 @@ const linksController = {
             // whenever we're transacting.
             const user = await Users.findById({ _id: request.user.id });
 
-            const now =  Date.now();
-            const hasActiveSubscription = user.subscription && 
-                user.subscription.status === 'active';
+            const now = Date.now();
 
-            if (!hasActiveSubscription && user.credits < 1) {
+            const isAdmin = user.role === 'admin';
+            const hasActiveSubscription = user.subscription && user.subscription.status === 'active';
+            if (!isAdmin && !hasActiveSubscription && user.credits < 1) {
                 return response.status(400).json({
                     message: 'Insufficient credit balance or no active subscription'
                 });
             }
+
 
             const link = new Links({
                 campaignTitle: campaign_title,
@@ -33,13 +34,16 @@ const linksController = {
                     request.user.id : request.user.adminId
             });
             await link.save();
-            
-            if(!hasActiveSubscription){
+
+            if (!hasActiveSubscription) {
                 user.credits -= 1;
                 await user.save();
             }
-            user.credits -= 1;
-            await user.save();
+            if (!isAdmin && !hasActiveSubscription) {
+                user.credits -= 1;
+                await user.save();
+            }
+
             response.json({
                 data: { linkId: link._id }
             });
@@ -187,15 +191,15 @@ const linksController = {
             }
 
             const isDevelopment = process.env.NODE_ENV === 'development';
-            isDevelopment ? '8.8.8.8' 
-            : request.headers['x-forward-for']?.split(',')[0] 
-            || request.socket.remoteAddress;
+            isDevelopment ? '8.8.8.8'
+                : request.headers['x-forward-for']?.split(',')[0]
+                || request.socket.remoteAddress;
 
             const geoResponse = await axios.get(`http://ip-api.com/json/${idAddress}`);
-            const {city, country, region, lat, lon, isp } = geoResponse.data;
+            const { city, country, region, lat, lon, isp } = geoResponse.data;
 
             const userAgent = request.headers['user-agent'] || 'unknown';
-            const {isMobile, browser } = getDeviceInfo(userAgent);
+            const { isMobile, browser } = getDeviceInfo(userAgent);
             const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
             const referrer = request.get('Refferrer') || null;
@@ -228,11 +232,11 @@ const linksController = {
         }
     },
     analytics: async (request, response) => {
-        try{
+        try {
             const { linkId, from, to } = request.query;
 
             const link = await Links.findById({ _id: linkId });
-            if(!link) {
+            if (!link) {
 
                 return response.status(404).json({
                     error: 'Link not found'
@@ -240,11 +244,11 @@ const linksController = {
             }
 
             const userId = request.user.role === 'admin'
-                ?request.user.id
-                :request.user.addminId
-            if(link.user.toString() !== userId) {
+                ? request.user.id
+                : request.user.addminId
+            if (link.user.toString() !== userId) {
                 return response.status(403).json({
-                    error:'Unauthorized'
+                    error: 'Unauthorized'
                 });
             }
 
@@ -252,7 +256,7 @@ const linksController = {
                 linkId: linkId
             };
 
-            if(from && to) {
+            if (from && to) {
                 query.clickAt = { $get: new Date(), $lte: new Date(to) };
 
             }

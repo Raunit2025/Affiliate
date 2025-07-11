@@ -25,9 +25,10 @@ function App() {
   useEffect(() => {
     const getLoggedInUser = async () => {
       try {
-        const response = await axios.get(`${serverEndpoint}/auth/getuser`, {
+        const response = await axios.post(`${serverEndpoint}/auth/is-user-logged-in`, {}, {
           withCredentials: true,
         });
+
         dispatch({ type: SET_USER, payload: response.data.user });
       } catch (err) {
         console.log("User not logged in");
@@ -132,7 +133,7 @@ function App() {
         <UserLayout>
           <AnalyticsDashboard />
         </UserLayout> :
-        <Navigate to ="/login"/>
+        <Navigate to="/login" />
       } />
     </Routes>
   );

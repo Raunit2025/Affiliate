@@ -9,9 +9,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Modal, Box, Typography } from '@mui/material';
 import { serverEndpoint } from '../../config/config';
 import { useSelector } from "react-redux";
+import { permissions } from '../../../../mern-project-server/src/constants/permissions';
 
 
 function LinksDashboard() {
+  const permissions = permissionsModule.permissions;
+  const role = userDetails?.role || 'viewer';
+  const userPermissions = permissions[role] || [];
+
   const [errors, setErrors] = useState({});
   const [linksData, setLinksData] = useState([]);
   const navigate = useNavigate();
