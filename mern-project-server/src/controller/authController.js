@@ -6,6 +6,7 @@ const { validationResult } = require('express-validator');
 
 // https://www.uuidgenerator.net/
 const secret = process.env.JWT_SECRET;
+const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
 
 const authController = {
     login: async (request, response) => {
@@ -40,8 +41,18 @@ const authController = {
                 subscription: data.subscription
             };
 
-            const token = jwt.sign(user, secret, { expiresIn: '1h' });
+            const token = jwt.sign(user, secret, { expiresIn: '1m' });
             response.cookie('jwtToken', token, {
+                httpOnly: true,
+                secure: true,
+                domain: 'localhost',
+                path: '/'
+            });
+
+            const refreshtoken = jwt.sign(user, refreshSecret, { expiresIn: '1h' });
+            //Store it in the database if you want! Storing in DB will
+            // make refresh tokens more secure.
+            response.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
                 secure: true,
                 domain: 'localhost',
@@ -68,6 +79,19 @@ const authController = {
 
         jwt.verify(token, secret, async (error, user) => {
             if (error) {
+                const refreshToken = request.cookies?.refreshToken;
+                if(refreshToken) {
+                    const {newAccessToken , user } = await attemptToRefreshToken(refreshToken);
+                    response.cookie('jwtToken', newAccessToken, {
+                        httpOnly: true,
+                        secure: true,
+                        domain: 'localhost',
+                        path: '/'
+                    });
+
+                    console.log('Refresh token renewed the access token');
+                    return response.json({ messsage: 'User is logged in', user: user})
+                }
                 return response.status(401).json({ message: 'Unauthorized access' });
             } else {
                 const latestUserDetails = await Users.findById({ _id: user.id });
@@ -157,12 +181,21 @@ const authController = {
                 credits: user.credits,
             };
 
-            const token = jwt.sign(userPayload, secret, { expiresIn: '1h' });
-
+            const token = jwt.sign(userPayload, secret, { expiresIn: '1m' });
             res.cookie('jwtToken', token, {
                 httpOnly: true,
                 secure: false, // change to true in production with HTTPS
                 sameSite: 'Lax',
+            });
+
+            const refreshtoken = jwt.sign(user, refreshSecret, { expiresIn: '7d' });
+            //Store it in the database if you want! Storing in DB will
+            // make refresh tokens more secure.
+            response.cookie('refreshToken', refreshtoken, {
+                httpOnly: true,
+                secure: true,
+                domain: 'localhost',
+                path: '/'
             });
 
             res.status(200).json({ user: userPayload, message: 'User authenticated' });
@@ -171,6 +204,8 @@ const authController = {
             res.status(401).json({ message: 'Google authentication failed' });
         }
     },
+
+    
 
 };
 

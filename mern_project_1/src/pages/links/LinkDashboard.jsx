@@ -1,82 +1,33 @@
+import IconButton from '@mui/material/IconButton';
+import { DataGrid } from '@mui/x-data-grid';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { DataGrid } from '@mui/x-data-grid';
-import IconButton from '@mui/material/IconButton';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import EditIcon from '@mui/icons-material/Edit';
-import { useNavigate } from 'react-router-dom';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { Modal, Box, Typography } from '@mui/material';
 import { serverEndpoint } from '../../config/config';
-import { useSelector } from "react-redux";
-import { permissions } from '../../../../mern-project-server/src/constants/permissions';
-
+import { usePermission } from '../../rbac/userPermissions';
+import { useNavigate } from 'react-router-dom';
 
 function LinksDashboard() {
-  const permissions = permissionsModule.permissions;
-  const role = userDetails?.role || 'viewer';
-  const userPermissions = permissions[role] || [];
-
   const [errors, setErrors] = useState({});
   const [linksData, setLinksData] = useState([]);
   const navigate = useNavigate();
+
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const permission = usePermission();
+
   const [formData, setFormData] = useState({
-    id: null,
     campaignTitle: "",
     originalUrl: "",
-    category: ""
+    category: "",
+    id: null
   });
 
-  const fetchLinks = async () => {
-    try {
-      const response = await axios.get(`${serverEndpoint}/links`, {
-        withCredentials: true
-      });
-      setLinksData(response.data.data);
-    } catch (error) {
-      setErrors({ message: 'Unable to fetch links at the moment. Please try again.' });
-    }
-  };
-
-  const userDetails = useSelector((state) => state.userDetails);
-  const [userChecked, setUserChecked] = useState(false);
-
-  useEffect(() => {
-    setUserChecked(true);
-  }, [userDetails]);
-
-  if (!userChecked) return null; // wait until state is checked
-  if (!userDetails) return <Navigate to="/login" replace />;
-
-
-  const handleOpenModal = (edit = false, data = {}) => {
-    if (edit) {
-      setFormData({
-        id: data._id,
-        campaignTitle: data.campaignTitle,
-        originalUrl: data.originalUrl,
-        category: data.category
-      });
-    } else {
-      setFormData({
-        id: null,
-        campaignTitle: "",
-        originalUrl: "",
-        category: ""
-      });
-    }
-
-    setIsEdit(edit);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => setShowModal(false);
-
   const handleShowDeleteModal = (linkId) => {
-    setFormData({ id: linkId });
+    setFormData((prev) => ({ ...prev, id: linkId }));
     setShowDeleteModal(true);
   };
 
@@ -84,38 +35,50 @@ function LinksDashboard() {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${serverEndpoint}/links/${formData.id}`, {
-        withCredentials: true
-      });
+      await axios.delete(`${serverEndpoint}/links/${formData.id}`, { withCredentials: true });
       await fetchLinks();
       handleCloseDeleteModal();
-    } catch (error) {
+    } catch {
       setErrors({ message: 'Unable to delete the link, please try again' });
     }
   };
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const handleOpenModal = (isEdit, data = {}) => {
+    setIsEdit(isEdit);
+    if (isEdit) {
+      setFormData({
+        id: data._id,
+        campaignTitle: data.campaignTitle,
+        originalUrl: data.originalUrl,
+        category: data.category
+      });
+    } else {
+      setFormData({ campaignTitle: "", originalUrl: "", category: "" });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => setShowModal(false);
+
+  const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [e.target.name]: e.target.value
     }));
   };
 
   const validate = () => {
-    const newErrors = {};
+    let newErrors = {};
     let isValid = true;
 
     if (!formData.campaignTitle.trim()) {
       newErrors.campaignTitle = "Campaign Title is mandatory";
       isValid = false;
     }
-
     if (!formData.originalUrl.trim()) {
       newErrors.originalUrl = "URL is mandatory";
       isValid = false;
     }
-
     if (!formData.category.trim()) {
       newErrors.category = "Category is mandatory";
       isValid = false;
@@ -125,8 +88,8 @@ function LinksDashboard() {
     return isValid;
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     if (validate()) {
       const body = {
@@ -137,32 +100,49 @@ function LinksDashboard() {
 
       try {
         if (isEdit) {
-          await axios.put(`${serverEndpoint}/links/${formData.id}`, body, {
-            withCredentials: true
-          });
+          await axios.put(`${serverEndpoint}/links/${formData.id}`, body, { withCredentials: true });
         } else {
-          await axios.post(`${serverEndpoint}/links`, body, {
-            withCredentials: true
-          });
+          await axios.post(`${serverEndpoint}/links`, body, { withCredentials: true });
         }
 
         await fetchLinks();
         handleCloseModal();
-        setFormData({
-          id: null,
-          campaignTitle: "",
-          originalUrl: "",
-          category: ""
-        });
-      } catch (error) {
-        setErrors({ message: "Unable to submit the form, please try again" });
+      } catch {
+        setErrors({ message: 'Unable to add the Link, please try again' });
       }
     }
   };
 
+  const fetchLinks = async () => {
+    try {
+      const res = await axios.get(`${serverEndpoint}/links`, { withCredentials: true });
+      setLinksData(res.data.data);
+    } catch {
+      setErrors({ message: 'Unable to fetch links at the moment. Please try again' });
+    }
+  };
+
+  useEffect(() => {
+    fetchLinks();
+  }, []);
+
   const columns = [
     { field: 'campaignTitle', headerName: 'Campaign', flex: 2 },
-    { field: 'originalUrl', headerName: 'URL', flex: 3 },
+    {
+      field: 'originalUrl',
+      headerName: 'URL',
+      flex: 3,
+      renderCell: (params) => (
+        <a
+          href={`${serverEndpoint}/links/r/${params.row._id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 underline"
+        >
+          {params.row.originalUrl}
+        </a>
+      )
+    },
     { field: 'category', headerName: 'Category', flex: 2 },
     { field: 'clickCount', headerName: 'Clicks', flex: 1 },
     {
@@ -170,40 +150,43 @@ function LinksDashboard() {
       headerName: 'Actions',
       flex: 1,
       renderCell: (params) => (
-        <>
-          <IconButton onClick={() => handleOpenModal(true, params.row)} size="small">
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => handleShowDeleteModal(params.row._id)} size="small">
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-
-          {permissions.canViewLink && (
-            <IconButton>
-              <AssessmentIcon onClick={() => {
-                navigate(`/analytics/${params.row._id}`);
-              }} />
+        <div className="flex space-x-1">
+          {permission.canEditLink && (
+            <IconButton onClick={() => handleOpenModal(true, params.row)}>
+              <EditIcon />
             </IconButton>
           )}
-        </>
+          {permission.canDeleteLink && (
+            <IconButton onClick={() => handleShowDeleteModal(params.row._id)}>
+              <DeleteIcon />
+            </IconButton>
+          )}
+          {permission.canViewLink && (
+            <IconButton onClick={() => navigate(`/analytics/${params.row._id}`)}>
+              <AssessmentIcon />
+            </IconButton>
+          )}
+        </div>
       )
     }
   ];
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="p-4 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Manage Affiliate Links</h2>
-        <button
-          onClick={() => handleOpenModal(false)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          + Add
-        </button>
+        {permission.canCreateLink && (
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            onClick={() => handleOpenModal(false)}
+          >
+            Add
+          </button>
+        )}
       </div>
 
       {errors.message && (
-        <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
           {errors.message}
         </div>
       )}
@@ -214,98 +197,102 @@ function LinksDashboard() {
           rows={linksData}
           columns={columns}
           initialState={{
-            pagination: {
-              paginationModel: { pageSize: 20, page: 0 }
-            }
+            pagination: { paginationModel: { pageSize: 20, page: 0 } }
           }}
           pageSizeOptions={[20, 50, 100]}
           disableRowSelectionOnClick
+          density="compact"
           sx={{ fontFamily: 'inherit' }}
         />
       </div>
 
-      {/* Add/Edit Modal */}
-      <Modal open={showModal} onClose={handleCloseModal}>
-        <Box
-          className="bg-white p-6 rounded-lg shadow-xl"
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            outline: 'none'
-          }}
-        >
-          <Typography variant="h6" className="mb-4">
-            {isEdit ? 'Edit Link' : 'Add Link'}
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            {['campaignTitle', 'originalUrl', 'category'].map((field) => (
-              <div className="mb-4" key={field}>
-                <label
-                  htmlFor={field}
-                  className="block text-sm font-medium mb-1 capitalize"
-                >
-                  {field.replace(/([A-Z])/g, ' $1')}
-                </label>
+      {/* Add / Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                {isEdit ? "Update Link" : "Add Link"}
+              </h3>
+              <button onClick={handleCloseModal} className="text-gray-500 hover:text-red-500">×</button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block font-medium">Campaign Title</label>
                 <input
                   type="text"
-                  name={field}
-                  id={field}
-                  value={formData[field]}
+                  name="campaignTitle"
+                  value={formData.campaignTitle}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded ${errors[field] ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`w-full border p-2 rounded ${errors.campaignTitle ? 'border-red-500' : ''}`}
                 />
-                {errors[field] && (
-                  <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
+                {errors.campaignTitle && (
+                  <p className="text-red-500 text-sm">{errors.campaignTitle}</p>
                 )}
               </div>
-            ))}
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-            >
-              {isEdit ? 'Update' : 'Submit'}
-            </button>
-          </form>
-        </Box>
-      </Modal>
+
+              <div>
+                <label className="block font-medium">URL</label>
+                <input
+                  type="text"
+                  name="originalUrl"
+                  value={formData.originalUrl}
+                  onChange={handleChange}
+                  className={`w-full border p-2 rounded ${errors.originalUrl ? 'border-red-500' : ''}`}
+                />
+                {errors.originalUrl && (
+                  <p className="text-red-500 text-sm">{errors.originalUrl}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block font-medium">Category</label>
+                <input
+                  type="text"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className={`w-full border p-2 rounded ${errors.category ? 'border-red-500' : ''}`}
+                />
+                {errors.category && (
+                  <p className="text-red-500 text-sm">{errors.category}</p>
+                )}
+              </div>
+
+              <div>
+                <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
-      <Modal open={showDeleteModal} onClose={handleCloseDeleteModal}>
-        <Box
-          className="bg-white p-6 rounded-lg shadow-xl"
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            outline: 'none'
-          }}
-        >
-          <Typography variant="h6" className="mb-4">
-            Confirm Delete
-          </Typography>
-          <p className="mb-6 text-gray-700">Are you sure you want to delete this link?</p>
-          <div className="flex justify-end gap-4">
-            <button
-              onClick={handleCloseDeleteModal}
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Delete
-            </button>
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+            <p className="mb-6">Are you sure you want to delete the link?</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCloseDeleteModal}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
           </div>
-        </Box>
-      </Modal>
+        </div>
+      )}
     </div>
   );
 }
