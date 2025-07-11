@@ -8,7 +8,7 @@ import axios from 'axios';
 import { serverEndpoint } from '../../config/config';
 import { usePermission } from '../../rbac/userPermissions';
 import { useNavigate } from 'react-router-dom';
-
+import { useParams } from 'react-router-dom';
 function LinksDashboard() {
   const [errors, setErrors] = useState({});
   const [linksData, setLinksData] = useState([]);

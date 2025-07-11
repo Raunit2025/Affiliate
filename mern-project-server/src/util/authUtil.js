@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
-const { default: subscriptions } = require('razorpay/dist/types/subscriptions');
 const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
 const secret = process.env.JWT_SECRET;
-
+const Users = require('../model/Users');
 const attemptToRefreshToken = async (refreshToken) => {
     try{
+
         const decoded = await jwt.verify(refreshToken, refreshSecret);
         
         //Fetch the latest user data from DB as across 7 days of 
@@ -16,13 +16,13 @@ const attemptToRefreshToken = async (refreshToken) => {
             id: data._id,
             username: data.email,
             name: data.name,
-            role: data.role? dat.role: 'admin',
+            role: data.role? data.role: 'admin',
             credits: data.credits,
             subscription: data.subscription
         };
 
         //change expire to 1 hour (1h) after testing.
-        const newAccessToken = jwt.sign(user, secret, {expiresIn: '1m'});
+        const newAccessToken = jwt.sign(user, secret, {expiresIn: '1h'});
 
         return {newAccessToken, user };
     } catch(error) {

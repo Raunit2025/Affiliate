@@ -28,7 +28,6 @@ ChartJS.register(
   Title
 );
 
-// Format date utility
 const formatDate = (isoDateString) => {
   if (!isoDateString) return "";
   try {
@@ -51,16 +50,20 @@ function AnalyticsDashboard() {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
 
+  // ✅ Now using POST instead of GET
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get(`${serverEndpoint}/links/analytics`, {
-        params: {
-          linkId: id,
-          from: fromDate,
-          to: toDate,
-        },
-        withCredentials: true,
-      });
+      const body = {
+        linkId: id,
+        from: fromDate,
+        to: toDate,
+      };
+
+      const response = await axios.post(
+        `${serverEndpoint}/links/analytics`,
+        body,
+        { withCredentials: true }
+      );
       setAnalyticsData(response.data);
     } catch (error) {
       console.log(error);
@@ -107,22 +110,18 @@ function AnalyticsDashboard() {
       <div className="bg-gray-100 rounded-lg p-4 mb-6">
         <h2 className="text-lg font-medium mb-2">Filters</h2>
         <div className="flex flex-wrap gap-4">
-          <div>
-            <DatePicker
-              selected={fromDate}
-              onChange={(date) => setFromDate(date)}
-              className="border rounded px-3 py-2 text-sm"
-              placeholderText="From (Date)"
-            />
-          </div>
-          <div>
-            <DatePicker
-              selected={toDate}
-              onChange={(date) => setToDate(date)}
-              className="border rounded px-3 py-2 text-sm"
-              placeholderText="To (Date)"
-            />
-          </div>
+          <DatePicker
+            selected={fromDate}
+            onChange={(date) => setFromDate(date)}
+            className="border rounded px-3 py-2 text-sm"
+            placeholderText="From (Date)"
+          />
+          <DatePicker
+            selected={toDate}
+            onChange={(date) => setToDate(date)}
+            className="border rounded px-3 py-2 text-sm"
+            placeholderText="To (Date)"
+          />
         </div>
       </div>
 
@@ -169,7 +168,7 @@ function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* DataGrid Table */}
+      {/* Data Table */}
       <div className="bg-white rounded-lg shadow">
         <DataGrid
           getRowId={(row) => row._id}
@@ -184,9 +183,7 @@ function AnalyticsDashboard() {
           disableRowSelectionOnClick
           density="compact"
           autoHeight
-          sx={{
-            fontFamily: "inherit",
-          }}
+          sx={{ fontFamily: "inherit" }}
         />
       </div>
     </div>

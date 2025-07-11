@@ -2,7 +2,7 @@ const Links = require("../model/Links");
 const Users = require("../model/Users");
 const axios = require('axios');
 const { getDeviceInfo } = require("../util/linkUtil");
-const { response } = require("express");
+const Clicks = require("../model/Clicks");
 
 const linksController = {
     create: async (request, response) => {
@@ -191,18 +191,18 @@ const linksController = {
             }
 
             const isDevelopment = process.env.NODE_ENV === 'development';
-            isDevelopment ? '8.8.8.8'
-                : request.headers['x-forward-for']?.split(',')[0]
-                || request.socket.remoteAddress;
+            const ipAddress = process.env.NODE_ENV === 'development'
+                ? '8.8.8.8'
+                : request.headers['x-forwarded-for']?.split(',')[0] || request.socket.remoteAddress;
 
-            const geoResponse = await axios.get(`http://ip-api.com/json/${idAddress}`);
+            const geoResponse = await axios.get(`http://ip-api.com/json/${ipAddress}`);
             const { city, country, region, lat, lon, isp } = geoResponse.data;
 
             const userAgent = request.headers['user-agent'] || 'unknown';
             const { isMobile, browser } = getDeviceInfo(userAgent);
             const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
-            const referrer = request.get('Refferrer') || null;
+            const referrer = request.get('Referrer') || null;
 
             await Clicks.create({
                 linkId: link._id,
@@ -213,7 +213,7 @@ const linksController = {
                 latitude: lat,
                 longitude: lon,
                 isp: isp,
-                referrer: refferrer,
+                referrer: referrer,
                 userAgent: userAgent,
                 deviceType: deviceType,
                 browser: browser,
@@ -233,44 +233,38 @@ const linksController = {
     },
     analytics: async (request, response) => {
         try {
-            const { linkId, from, to } = request.query;
+            const { linkId, from, to } = request.body;
 
-            const link = await Links.findById({ _id: linkId });
+            const link = await Links.findById(linkId);
             if (!link) {
-
-                return response.status(404).json({
-                    error: 'Link not found'
-                });
+                return response.status(404).json({ error: 'Link not found' });
             }
 
             const userId = request.user.role === 'admin'
                 ? request.user.id
-                : request.user.addminId
+                : request.user.adminId;
+
             if (link.user.toString() !== userId) {
-                return response.status(403).json({
-                    error: 'Unauthorized'
-                });
+                return response.status(403).json({ error: 'Unauthorized' });
             }
 
-            const query = {
-                linkId: linkId
-            };
+            const query = { linkId };
 
             if (from && to) {
-                query.clickAt = { $get: new Date(), $lte: new Date(to) };
-
+                query.clickedAt = {
+                    $gte: new Date(from),
+                    $lte: new Date(to),
+                };
             }
 
             const data = await Clicks.find(query).sort({ clickedAt: -1 });
-            response.json(data);
 
+            return response.json(data);
         } catch (error) {
             console.log(error);
-            return response.status(500).json({
-                message: 'Internal server error'
-            });
+            return response.status(500).json({ message: 'Internal server error' });
         }
-    }
+    },
 };
 
 module.exports = linksController;

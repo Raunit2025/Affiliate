@@ -28,21 +28,22 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   const isUserLoggedIn = async () => {
-    try {
-      const res = await axios.post(
-        `${serverEndpoint}/auth/is-user-logged-in`,
-        {},
-        { withCredentials: true }
-      );
-      dispatch({
-        type: SET_USER,
-        payload: res.data.user,
-      });
-    } catch (error) {
-      console.error("Auth Check Failed", error);
-    } finally {
-      setLoading(false);
-    }
+  try {
+    const res = await axios.post(
+      `${serverEndpoint}/auth/is-user-logged-in`,
+      {},
+      { withCredentials: true }
+    );
+    dispatch({
+      type: SET_USER,
+      payload: res.data.user,
+    });
+  } catch (error) {
+    console.error("Auth Check Failed", error);
+    alert("🚫 Backend not reachable. Please ensure your backend server is running.");
+  } finally {
+    setLoading(false);
+  }
   };
 
   useEffect(() => {
