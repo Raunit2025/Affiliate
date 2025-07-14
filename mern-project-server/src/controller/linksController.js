@@ -9,10 +9,6 @@ const linksController = {
         const { campaign_title, original_url, category } = request.body;
 
         try {
-            // We're fetching user details from DB even though we have
-            // it available in request object. The reason is critical operation.
-            // We're dealing with money and we want to pull latest information
-            // whenever we're transacting.
             const user = await Users.findById({ _id: request.user.id });
 
             const now = Date.now();
@@ -87,7 +83,6 @@ const linksController = {
 
             const userId = request.user.role === 'admin' ?
                 request.user.id : request.user.adminId;
-            // Make sure the link indeed belong to the logged in user.
             if (link.user.toString() !== userId) {
                 return response.status(403).json({
                     error: 'Unauthorized access'
@@ -119,7 +114,6 @@ const linksController = {
 
             const userId = request.user.role === 'admin' ?
                 request.user.id : request.user.adminId;
-            // Make sure the link indeed belong to the logged in user.
             if (link.user.toString() !== userId) {
                 return response.status(403).json({
                     error: 'Unauthorized access'
@@ -131,9 +125,8 @@ const linksController = {
                 campaignTitle: campaign_title,
                 originalUrl: original_url,
                 category: category
-            }, { new: true }); // new: true flag makes sure mongodb returns updated data after the update operation
-
-            // Return updated link data
+            }, { new: true }); 
+            
             response.json({ data: link });
         } catch (error) {
             console.log(error);
