@@ -22,13 +22,16 @@ app.use((request, response, next) => {
 
     express.json()(request, response, next);
 });
-app.use(cookieParser());
-
 const corsOptions = {
     origin: process.env.CLIENT_ENDPOINT,
     credentials: true
 };
+
 app.use(cors(corsOptions));
+app.use(cookieParser());
+
+
+
 app.use('/auth', authRoutes);
 app.use('/links', linksRoutes);
 app.use('/users', userRoutes);

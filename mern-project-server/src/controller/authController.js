@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const Users = require('../model/Users');
 const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
-const {attemptToRefreshToken}   = require('../util/authUtil');
+const { attemptToRefreshToken } = require('../util/authUtil');
 
 // https://www.uuidgenerator.net/
 const secret = process.env.JWT_SECRET;
@@ -45,9 +45,9 @@ const authController = {
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
+                secure: false,
+                sameSite: 'Lax',
+                path: '/',
             });
 
             const refreshtoken = jwt.sign(user, refreshSecret, { expiresIn: '1h' });
@@ -55,9 +55,9 @@ const authController = {
             // make refresh tokens more secure.
             response.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
+                secure: false,
+                sameSite: 'Lax',
+                path: '/',
             });
             response.json({ user: user, message: 'User authenticated' });
         } catch (error) {
@@ -81,25 +81,33 @@ const authController = {
         jwt.verify(token, secret, async (error, user) => {
             if (error) {
                 const refreshToken = request.cookies?.refreshToken;
-                if(refreshToken) {
-                    const {newAccessToken , user } = await attemptToRefreshToken(refreshToken);
-                    response.cookie('jwtToken', newAccessToken, {
-                        httpOnly: true,
-                        secure: true,
-                        domain: 'localhost',
-                        path: '/'
-                    });
+                if (refreshToken) {
+                    try {
+                        const { newAccessToken, user } = await attemptToRefreshToken(refreshToken);
 
-                    console.log('Refresh token renewed the access token');
-                    return response.json({ messsage: 'User is logged in', user: user})
+                        response.cookie('jwtToken', newAccessToken, {
+                            httpOnly: true,
+                            secure: false,
+                            sameSite: 'Lax',
+                            path: '/',
+                        });
+
+                        console.log('✅ Refresh token renewed the access token');
+                        return response.json({ message: 'User is logged in', user: user });
+                    } catch (refreshErr) {
+                        console.log("🔁 Refresh token failed:", refreshErr.message);
+                        return response.status(401).json({ message: 'Unauthorized access' });
+                    }
                 }
+
                 return response.status(401).json({ message: 'Unauthorized access' });
             } else {
                 const latestUserDetails = await Users.findById({ _id: user.id });
-                response.json({ message: 'User is logged in', user: latestUserDetails });
+                return response.json({ message: 'User is logged in', user: latestUserDetails });
             }
         });
     },
+
 
     register: async (request, response) => {
         try {
@@ -135,9 +143,9 @@ const authController = {
 
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
+                secure: false,
+                sameSite: 'Lax',
+                path: '/',
             });
             response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
@@ -194,9 +202,9 @@ const authController = {
             // make refresh tokens more secure.
             response.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
-                secure: true,
-                domain: 'localhost',
-                path: '/'
+                secure: false,
+                sameSite: 'Lax',
+                path: '/',
             });
 
             res.status(200).json({ user: userPayload, message: 'User authenticated' });
@@ -206,7 +214,7 @@ const authController = {
         }
     },
 
-    
+
 
 };
 
