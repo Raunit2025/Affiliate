@@ -17,12 +17,15 @@ const UsersSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false },
     name: { type: String, required: true },
-    isGoogleUser: { type: Boolean, default: false }, // Changed to Boolean for clarity
+    isGoogleUser: { type: Boolean, default: false },
     googleId: { type: String, required: false },
-    role: { type: String, default: VIEWER_ROLE }, // Corrected: Default role to viewer
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', index: true, default: null }, // Default to null
+    role: { type: String, default: VIEWER_ROLE },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', index: true, default: null },
     credits: { type: Number, default: 0 },
-    subscription: { type: subscriptionSchema, default: () => ({}) }
+    subscription: { type: subscriptionSchema, default: () => ({}) },
+    // New fields for password reset
+    resetPasswordCode: { type: String },
+    resetPasswordExpires: { type: Date },
 });
 
 module.exports = mongoose.model('users', UsersSchema);

@@ -4,7 +4,7 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { serverEndpoint } from "../config/config";
 import { useDispatch } from "react-redux";
 import { SET_USER } from "../redux/user/actions";
-import { Link } from "react-router-dom"; // Import Link
+import { Link } from "react-router-dom";
 
 function Login() {
   const dispatch = useDispatch();
@@ -142,12 +142,17 @@ function Login() {
           <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
         </GoogleOAuthProvider>
 
-        {/* Add Register button/link */}
         <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 text-sm mb-2">
             Don't have an account?{" "}
             <Link to="/register" className="text-blue-600 hover:underline font-medium">
               Register here
+            </Link>
+          </p>
+          {/* New: Forgot Password Link */}
+          <p className="text-gray-600 text-sm">
+            <Link to="/forgot-password" className="text-blue-600 hover:underline font-medium">
+              Forgot Password?
             </Link>
           </p>
         </div>

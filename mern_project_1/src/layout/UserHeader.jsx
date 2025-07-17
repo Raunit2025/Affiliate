@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 
 function UserHeader() {
   const userDetails = useSelector((state) => state.userDetails);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   // Close dropdown if clicked outside
   useEffect(() => {
@@ -18,11 +19,15 @@ function UserHeader() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleResetPasswordClick = () => {
+    setIsDropdownOpen(false); // Close dropdown immediately
+    // Navigate to ResetPassword page, indicating it's from the user header
+    navigate("/reset-password", { state: { fromUserHeader: true } });
+  };
+
   return (
     <nav className="bg-gray-900 text-white px-4 py-3 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
-        {/* Changed text from "Dashboard" to "Affiliate++" (your app's name) */}
-        {/* This link already points to "/", which redirects to /dashboard if logged in */}
         <Link to="/" className="text-xl font-semibold">
           Affiliate++
         </Link>
@@ -48,6 +53,15 @@ function UserHeader() {
 
           {isDropdownOpen && (
             <ul className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg z-50">
+              <li>
+                {/* New: Reset Password Link */}
+                <button
+                  onClick={handleResetPasswordClick}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Reset Password
+                </button>
+              </li>
               <li>
                 <Link
                   to="/logout"

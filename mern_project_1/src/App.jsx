@@ -18,6 +18,8 @@ import Logout from "./pages/Logout";
 import ManageUsers from "./pages/users/ManageUsers";
 import ManagePayments from "./pages/payments/ManagePayments";
 import AnalyticsDashboard from "./pages/links/AnalyticsDashboard";
+import ForgetPassword from "./pages/forgetPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import UnauthorizedAccess from "./components/UnauthorizedAccess";
 import ProtectedRoute from "./rbac/ProtectedRoute";
@@ -39,10 +41,7 @@ function App() {
         payload: res.data.user,
       });
     } catch (error) {
-      console.error("Auth Check Failed:", error); // Replaced alert with console.error
-      // In a real application, you might use a toast notification or
-      // display a message on the UI instead of a blocking alert.
-      // alert("🚫 Backend not reachable. Please ensure your backend server is running.");
+      console.error("Auth Check Failed:", error);
     } finally {
       setLoading(false);
     }
@@ -98,6 +97,38 @@ function App() {
           ) : (
             <AppLayout>
               <Register />
+            </AppLayout>
+          )
+        }
+      />
+
+      {/* New Route for Forget Password */}
+      <Route
+        path="/forgot-password"
+        element={
+          userDetails ? (
+            <Navigate to="/dashboard" /> // If logged in, no need for forgot password
+          ) : (
+            <AppLayout>
+              <ForgetPassword />
+            </AppLayout>
+          )
+        }
+      />
+
+      {/* New Route for Reset Password */}
+      <Route
+        path="/reset-password"
+        element={
+          // This page can be accessed by logged-out users (from forgot flow)
+          // or logged-in users (from dashboard reset)
+          userDetails ? (
+            <UserLayout>
+              <ResetPassword />
+            </UserLayout>
+          ) : (
+            <AppLayout>
+              <ResetPassword />
             </AppLayout>
           )
         }

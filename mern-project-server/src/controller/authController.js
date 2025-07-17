@@ -4,7 +4,8 @@ const Users = require('../model/Users');
 const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
 const { attemptToRefreshToken } = require('../util/authUtil');
-const { VIEWER_ROLE, ADMIN_ROLE } = require('../constants/userConstants'); // Import roles
+const { VIEWER_ROLE, ADMIN_ROLE } = require('../constants/userConstants');
+const sendEmail = require('../service/emailService'); // Import the email service
 
 const secret = process.env.JWT_SECRET;
 const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
@@ -14,23 +15,23 @@ const authController = {
         try {
             const errors = validationResult(request);
             if (!errors.isEmpty()) {
-                console.log('Login failed: Validation errors:', errors.array()); // <-- ADD THIS LOG
+                console.log('Login failed: Validation errors:', errors.array());
                 return response.status(401).json({ errors: errors.array() });
             }
 
             const { username, password } = request.body;
-            console.log('Attempting to find user with email:', username); // <-- ADD THIS LOG
+            console.log('Attempting to find user with email:', username);
 
             const data = await Users.findOne({ email: username });
             if (!data) {
-                console.log('Login failed: User not found for email:', username); // <-- ADD THIS LOG
+                console.log('Login failed: User not found for email:', username);
                 return response.status(401).json({ message: 'Invalid credentials ' });
             }
 
-            console.log('User found. Comparing passwords...'); // <-- ADD THIS LOG
+            console.log('User found. Comparing passwords...');
             const isMatch = await bcrypt.compare(password, data.password);
             if (!isMatch) {
-                console.log('Login failed: Password mismatch for user:', username); // <-- ADD THIS LOG
+                console.log('Login failed: Password mismatch for user:', username);
                 return response.status(401).json({ message: 'Invalid credentials ' });
             }
 
@@ -38,7 +39,7 @@ const authController = {
                 id: data._id,
                 name: data.name,
                 email: data.email,
-                role: data.role ? data.role : ADMIN_ROLE, // Ensure role is defined, default to admin if not (consider a safer default)
+                role: data.role ? data.role : ADMIN_ROLE,
                 adminId: data.adminId,
                 credits: data.credits,
                 subscription: data.subscription
@@ -47,18 +48,16 @@ const authController = {
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Corrected
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'Lax',
                 path: '/',
             });
 
-            // Convert Mongoose document to plain object before signing
-            const refreshTokenPayload = data.toObject(); // Use the found 'data' directly, or construct a new payload
-            const refreshtoken = jwt.sign(refreshTokenPayload, refreshSecret, { expiresIn: '7d' }); // Standardized to 7d
-            // Recommendation: Store this refresh token in the database for proper revocation
+            const refreshTokenPayload = data.toObject();
+            const refreshtoken = jwt.sign(refreshTokenPayload, refreshSecret, { expiresIn: '7d' });
             response.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Corrected
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'Lax',
                 path: '/',
             });
@@ -70,8 +69,8 @@ const authController = {
     },
 
     logout: (request, response) => {
-        response.clearCookie('jwtToken', { path: '/' }); // Ensure path is specified
-        response.clearCookie('refreshToken', { path: '/' }); // Clear refresh token as well
+        response.clearCookie('jwtToken', { path: '/' });
+        response.clearCookie('refreshToken', { path: '/' });
         response.json({ message: 'Logout successfull' });
     },
 
@@ -97,24 +96,25 @@ const authController = {
                         });
 
                         console.log('✅ Refresh token renewed the access token');
-                        // Fetch latest user details from DB to ensure credits/subscription are up-to-date
                         const latestUserDetails = await Users.findById({ _id: refreshedUser.id });
+                        if (!latestUserDetails) {
+                            response.clearCookie('jwtToken', { path: '/' });
+                            response.clearCookie('refreshToken', { path: '/' });
+                            return response.status(401).json({ message: 'Unauthorized access: User not found' });
+                        }
                         return response.json({ message: 'User is logged in', user: latestUserDetails });
                     } catch (refreshErr) {
-                        console.error('Refresh token failed in middleware:', refreshErr.message); // Improved logging
-                        // Clear invalid tokens if refresh fails to force re-login
+                        console.error('Refresh token failed in middleware:', refreshErr.message);
                         response.clearCookie('jwtToken', { path: '/' });
                         response.clearCookie('refreshToken', { path: '/' });
-                        return response.status(401).json({ error: 'Unauthorized access: Invalid refresh token' });
+                        return response.status(401).json({ message: 'Unauthorized access: Invalid refresh token' });
                     }
                 }
 
                 return response.status(401).json({ message: 'Unauthorized access: No refresh token' });
             } else {
-                // Fetch latest user details from DB to ensure credits/subscription are up-to-date
                 const latestUserDetails = await Users.findById({ _id: user.id });
                 if (!latestUserDetails) {
-                    // User might have been deleted
                     response.clearCookie('jwtToken', { path: '/' });
                     response.clearCookie('refreshToken', { path: '/' });
                     return response.status(401).json({ message: 'Unauthorized access: User not found' });
@@ -140,7 +140,7 @@ const authController = {
                 email: username,
                 password: encryptedPassword,
                 name: name,
-                role: VIEWER_ROLE // Corrected: Default to viewer role for self-registration
+                role: VIEWER_ROLE
             });
             await user.save();
 
@@ -155,13 +155,13 @@ const authController = {
 
             response.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Corrected
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'Lax',
                 path: '/',
             });
             response.json({ message: 'User registered', user: userDetails });
         } catch (error) {
-            console.error('Register Error:', error); // Improved logging
+            console.error('Register Error:', error);
             return response.status(500).json({ error: 'Internal Server Error' });
         }
     },
@@ -189,11 +189,11 @@ const authController = {
                     name,
                     googleId,
                     isGoogleUser: true,
-                    role: ADMIN_ROLE, // Default to admin for first Google user, subsequent Google users might need different logic
-                    adminId: null // Initial value, will be updated below
+                    role: ADMIN_ROLE,
+                    adminId: null
                 });
                 await user.save();
-                user.adminId = user._id; // Set adminId to self if they are the first admin via Google
+                user.adminId = user._id;
                 await user.save();
             }
 
@@ -208,25 +208,85 @@ const authController = {
             const token = jwt.sign(userPayload, secret, { expiresIn: '1h' });
             res.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Corrected
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'Lax',
             });
 
-            // Convert Mongoose user document to a plain JavaScript object before signing
-            const refreshTokenPayload = user.toObject(); // Corrected: Using .toObject()
-            const refreshtoken = jwt.sign(refreshTokenPayload, refreshSecret, { expiresIn: '7d' }); // Standardized to 7d
-            // Recommendation: Store this refresh token in the database for proper revocation
+            const refreshTokenPayload = user.toObject();
+            const refreshtoken = jwt.sign(refreshTokenPayload, refreshSecret, { expiresIn: '7d' });
             res.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Corrected
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'Lax',
                 path: '/',
             });
 
             res.status(200).json({ user: userPayload, message: 'User authenticated' });
         } catch (error) {
-            console.error('Google Auth Error:', error); // Improved logging
+            console.error('Google Auth Error:', error);
             res.status(401).json({ message: 'Google authentication failed' });
+        }
+    },
+
+    // New API: sendResetPasswordToken
+    sendResetPasswordToken: async (request, response) => {
+        try {
+            const { email } = request.body;
+
+            const user = await Users.findOne({ email });
+            if (!user) {
+                // Return a generic success message to prevent email enumeration attacks
+                return response.status(200).json({ message: 'If a user with that email exists, a password reset code has been sent.' });
+            }
+
+            // Generate a 6-digit code
+            const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+            // Set expiry for 10 minutes
+            const resetExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+            user.resetPasswordCode = resetCode;
+            user.resetPasswordExpires = resetExpires;
+            await user.save();
+
+            const emailSubject = 'Affiliate++ Password Reset Code';
+            const emailBody = `Your password reset code is: ${resetCode}\n\nThis code is valid for 10 minutes.`;
+
+            await sendEmail(user.email, emailSubject, emailBody);
+
+            response.status(200).json({ message: 'If a user with that email exists, a password reset code has been sent.' });
+        } catch (error) {
+            console.error('Send Reset Password Token Error:', error);
+            response.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    // New API: resetPassword
+    resetPassword: async (request, response) => {
+        try {
+            const { email, code, newPassword } = request.body;
+
+            const user = await Users.findOne({ email });
+            if (!user) {
+                return response.status(400).json({ message: 'Invalid email or code.' });
+            }
+
+            // Validate code and expiry
+            if (!user.resetPasswordCode || user.resetPasswordCode !== code || user.resetPasswordExpires < new Date()) {
+                return response.status(400).json({ message: 'Invalid or expired reset code.' });
+            }
+
+            // Hash the new password
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+            user.password = hashedPassword;
+            user.resetPasswordCode = undefined; // Clear the code
+            user.resetPasswordExpires = undefined; // Clear the expiry
+            await user.save();
+
+            response.status(200).json({ message: 'Password has been reset successfully.' });
+        } catch (error) {
+            console.error('Reset Password Error:', error);
+            response.status(500).json({ error: 'Internal server error' });
         }
     },
 };
