@@ -8,13 +8,15 @@ const CREDIT_PACKS = {
 const PLAN_IDS = {
     UNLIMITED_YEARLY: {
         id: process.env.RAZORPAY_YEARLY_PLAN_ID,
-        planName: 'Unilimited Yearly',
-        totalBillingCycleCount: 5
+        planName: 'Unlimited Yearly',
+        // totalBillingCycleCount: 5 // Set to 0 for indefinite subscriptions (auto-renew until cancelled)
+        totalBillingCycleCount: 0
     },
-    UNILIMITED_MONTHLY: {
+    UNLIMITED_MONTHLY: { // Corrected typo UNILIMITED_MONTHLY to UNLIMITED_MONTHLY
         id: process.env.RAZORPAY_MONTHLY_PLAN_ID,
         planName: 'Unlimited Monthly',
-        totalBillingCycleCount: 12
+        // totalBillingCycleCount: 12 // Set to 0 for indefinite subscriptions (auto-renew until cancelled)
+        totalBillingCycleCount: 0
     },
 };
 

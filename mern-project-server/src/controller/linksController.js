@@ -3,6 +3,7 @@ const Users = require("../model/Users");
 const axios = require('axios');
 const { getDeviceInfo } = require("../util/linkUtil");
 const Clicks = require("../model/Clicks");
+const { ADMIN_ROLE } = require('../constants/userConstants'); // Import admin role
 
 const linksController = {
     create: async (request, response) => {
@@ -10,41 +11,37 @@ const linksController = {
 
         try {
             const user = await Users.findById({ _id: request.user.id });
+            if (!user) {
+                return response.status(404).json({ message: 'User not found' });
+            }
 
-            const now = Date.now();
-
-            const isAdmin = user.role === 'admin';
+            const isAdmin = user.role === ADMIN_ROLE;
             const hasActiveSubscription = user.subscription && user.subscription.status === 'active';
+
             if (!isAdmin && !hasActiveSubscription && user.credits < 1) {
                 return response.status(400).json({
                     message: 'Insufficient credit balance or no active subscription'
                 });
             }
 
-
             const link = new Links({
                 campaignTitle: campaign_title,
                 originalUrl: original_url,
                 category: category,
-                user: request.user.role === 'admin' ?
-                    request.user.id : request.user.adminId
+                user: request.user.id // Corrected: Link is always owned by the user who creates it
             });
             await link.save();
 
-            if (!hasActiveSubscription) {
-                user.credits -= 1;
-                await user.save();
-            }
             if (!isAdmin && !hasActiveSubscription) {
                 user.credits -= 1;
                 await user.save();
             }
 
             response.json({
-                data: { linkId: link._id }
+                data: { linkId: link._id, userCredits: user.credits }
             });
         } catch (error) {
-            console.log(error);
+            console.error('Create Link Error:', error);
             response.status(500).json({
                 error: 'Internal server error'
             });
@@ -53,14 +50,25 @@ const linksController = {
 
     getAll: async (request, response) => {
         try {
-            const userId = request.user.role === 'admin' ?
-                request.user.id : request.user.adminId;
+            const currentUserId = request.user.id;
+            const isAdmin = request.user.role === ADMIN_ROLE;
+
+            let queryConditions = { user: currentUserId }; // Default: User sees their own links
+
+            if (isAdmin) {
+                // Find users managed by this admin
+                const managedUsers = await Users.find({ adminId: currentUserId }).select('_id');
+                const managedUserIds = managedUsers.map(u => u._id);
+                // Admin can see their own links and links of managed users
+                queryConditions = { user: { $in: [currentUserId, ...managedUserIds] } };
+            }
+
             const links = await Links
-                .find({ user: userId })
+                .find(queryConditions)
                 .sort({ createdAt: -1 });
             response.json({ data: links });
         } catch (error) {
-            console.log(error);
+            console.error('Get All Links Error:', error);
             response.status(500).json({
                 error: 'Internal server error'
             });
@@ -71,30 +79,34 @@ const linksController = {
         try {
             const linkId = request.params.id;
             if (!linkId) {
-                return response.status(401)
-                    .json({ error: 'Link ID is required' });
+                return response.status(400).json({ error: 'Link ID is required' });
             }
 
             const link = await Links.findById(linkId);
             if (!link) {
-                return response.status(404)
-                    .json({ error: 'LinkID does not exist' });
+                return response.status(404).json({ error: 'Link ID does not exist' });
             }
 
-            const userId = request.user.role === 'admin' ?
-                request.user.id : request.user.adminId;
-            if (link.user.toString() !== userId) {
-                return response.status(403).json({
-                    error: 'Unauthorized access'
-                });
+            const currentUserId = request.user.id;
+            const isAdmin = request.user.role === ADMIN_ROLE;
+
+            // Check if the link belongs to the current user
+            if (link.user.toString() === currentUserId.toString()) {
+                return response.json({ data: link });
             }
 
-            response.json({ data: link });
+            // If not owner, check if current user is an admin managing the link's owner
+            if (isAdmin) {
+                const linkOwner = await Users.findById(link.user).select('adminId');
+                if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
+                    return response.json({ data: link });
+                }
+            }
+
+            return response.status(403).json({ error: 'Forbidden: Unauthorized access to this link' });
         } catch (error) {
-            console.log(error);
-            response.status(500).json({
-                error: 'Internal server error'
-            });
+            console.error('Get Link By ID Error:', error);
+            response.status(500).json({ error: 'Internal server error' });
         }
     },
 
@@ -102,37 +114,46 @@ const linksController = {
         try {
             const linkId = request.params.id;
             if (!linkId) {
-                return response.status(401)
-                    .json({ error: 'Link ID is required' });
+                return response.status(400).json({ error: 'Link ID is required' });
             }
 
             let link = await Links.findById(linkId);
             if (!link) {
-                return response.status(404)
-                    .json({ error: 'LinkID does not exist' });
+                return response.status(404).json({ error: 'Link ID does not exist' });
             }
 
-            const userId = request.user.role === 'admin' ?
-                request.user.id : request.user.adminId;
-            if (link.user.toString() !== userId) {
-                return response.status(403).json({
-                    error: 'Unauthorized access'
-                });
+            const currentUserId = request.user.id;
+            const isAdmin = request.user.role === ADMIN_ROLE;
+
+            // Check if the link belongs to the current user
+            if (link.user.toString() === currentUserId.toString()) {
+                const { campaign_title, original_url, category } = request.body;
+                link = await Links.findByIdAndUpdate(linkId, {
+                    campaignTitle: campaign_title,
+                    originalUrl: original_url,
+                    category: category
+                }, { new: true });
+                return response.json({ data: link });
             }
 
-            const { campaign_title, original_url, category } = request.body;
-            link = await Links.findByIdAndUpdate(linkId, {
-                campaignTitle: campaign_title,
-                originalUrl: original_url,
-                category: category
-            }, { new: true }); 
-            
-            response.json({ data: link });
+            // If not owner, check if current user is an admin managing the link's owner
+            if (isAdmin) {
+                const linkOwner = await Users.findById(link.user).select('adminId');
+                if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
+                    const { campaign_title, original_url, category } = request.body;
+                    link = await Links.findByIdAndUpdate(linkId, {
+                        campaignTitle: campaign_title,
+                        originalUrl: original_url,
+                        category: category
+                    }, { new: true });
+                    return response.json({ data: link });
+                }
+            }
+
+            return response.status(403).json({ error: 'Forbidden: Unauthorized access to update this link' });
         } catch (error) {
-            console.log(error);
-            response.status(500).json({
-                error: 'Internal server error'
-            });
+            console.error('Update Link Error:', error);
+            response.status(500).json({ error: 'Internal server error' });
         }
     },
 
@@ -140,32 +161,36 @@ const linksController = {
         try {
             const linkId = request.params.id;
             if (!linkId) {
-                return response.status(401)
-                    .json({ error: 'Link ID is required' });
+                return response.status(400).json({ error: 'Link ID is required' });
             }
 
             let link = await Links.findById(linkId);
             if (!link) {
-                return response.status(404)
-                    .json({ error: 'LinkID does not exist' });
+                return response.status(404).json({ error: 'Link ID does not exist' });
             }
 
-            const userId = request.user.role === 'admin' ?
-                request.user.id : request.user.adminId;
-            // Make sure the link indeed belong to the logged in user.
-            if (link.user.toString() !== userId) {
-                return response.status(403).json({
-                    error: 'Unauthorized access'
-                });
+            const currentUserId = request.user.id;
+            const isAdmin = request.user.role === ADMIN_ROLE;
+
+            // Check if the link belongs to the current user
+            if (link.user.toString() === currentUserId.toString()) {
+                await link.deleteOne();
+                return response.json({ message: 'Link deleted successfully' });
             }
 
-            await link.deleteOne();
-            response.json({ message: 'Link deleted' });
+            // If not owner, check if current user is an admin managing the link's owner
+            if (isAdmin) {
+                const linkOwner = await Users.findById(link.user).select('adminId');
+                if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
+                    await link.deleteOne();
+                    return response.json({ message: 'Link deleted successfully' });
+                }
+            }
+
+            return response.status(403).json({ error: 'Forbidden: Unauthorized access to delete this link' });
         } catch (error) {
-            console.log(error);
-            response.status(500).json({
-                error: 'Internal server error'
-            });
+            console.error('Delete Link Error:', error);
+            response.status(500).json({ error: 'Internal server error' });
         }
     },
 
@@ -173,23 +198,27 @@ const linksController = {
         try {
             const linkId = request.params.id;
             if (!linkId) {
-                return response.status(401)
-                    .json({ error: 'Link ID is required' });
+                return response.status(400).json({ error: 'Link ID is required' });
             }
 
             let link = await Links.findById(linkId);
             if (!link) {
-                return response.status(404)
-                    .json({ error: 'LinkID does not exist' });
+                return response.status(404).json({ error: 'Link ID does not exist' });
             }
 
-            const isDevelopment = process.env.NODE_ENV === 'development';
             const ipAddress = process.env.NODE_ENV === 'development'
                 ? '8.8.8.8'
                 : request.headers['x-forwarded-for']?.split(',')[0] || request.socket.remoteAddress;
 
-            const geoResponse = await axios.get(`http://ip-api.com/json/${ipAddress}`);
-            const { city, country, region, lat, lon, isp } = geoResponse.data;
+            let city, country, region, lat, lon, isp;
+            try {
+                const geoResponse = await axios.get(`http://ip-api.com/json/${ipAddress}`);
+                ({ city, country, region, lat, lon, isp } = geoResponse.data);
+            } catch (geoError) {
+                console.warn(`Could not fetch geo-location for IP ${ipAddress}:`, geoError.message);
+                city = 'Unknown'; country = 'Unknown'; region = 'Unknown';
+                lat = 0; lon = 0; isp = 'Unknown';
+            }
 
             const userAgent = request.headers['user-agent'] || 'unknown';
             const { isMobile, browser } = getDeviceInfo(userAgent);
@@ -218,10 +247,8 @@ const linksController = {
 
             response.redirect(link.originalUrl);
         } catch (error) {
-            console.log(error);
-            response.status(500).json({
-                error: 'Internal server error'
-            });
+            console.error('Redirect Link Error:', error);
+            response.status(500).json({ error: 'Internal server error' });
         }
     },
     analytics: async (request, response) => {
@@ -233,28 +260,35 @@ const linksController = {
                 return response.status(404).json({ error: 'Link not found' });
             }
 
-            const userId = request.user.role === 'admin'
-                ? request.user.id
-                : request.user.adminId;
+            const currentUserId = request.user.id;
+            const isAdmin = request.user.role === ADMIN_ROLE;
 
-            if (link.user.toString() !== userId) {
-                return response.status(403).json({ error: 'Unauthorized' });
+            // Check if the link belongs to the current user
+            if (link.user.toString() === currentUserId.toString()) {
+                const query = { linkId };
+                if (from && to) {
+                    query.clickedAt = { $gte: new Date(from), $lte: new Date(to) };
+                }
+                const data = await Clicks.find(query).sort({ clickedAt: -1 });
+                return response.json(data);
             }
 
-            const query = { linkId };
-
-            if (from && to) {
-                query.clickedAt = {
-                    $gte: new Date(from),
-                    $lte: new Date(to),
-                };
+            // If not owner, check if current user is an admin managing the link's owner
+            if (isAdmin) {
+                const linkOwner = await Users.findById(link.user).select('adminId');
+                if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
+                    const query = { linkId };
+                    if (from && to) {
+                        query.clickedAt = { $gte: new Date(from), $lte: new Date(to) };
+                    }
+                    const data = await Clicks.find(query).sort({ clickedAt: -1 });
+                    return response.json(data);
+                }
             }
 
-            const data = await Clicks.find(query).sort({ clickedAt: -1 });
-
-            return response.json(data);
+            return response.status(403).json({ error: 'Forbidden: Unauthorized access to analytics' });
         } catch (error) {
-            console.log(error);
+            console.error('Analytics Fetch Error:', error);
             return response.status(500).json({ message: 'Internal server error' });
         }
     },

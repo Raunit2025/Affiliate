@@ -21,8 +21,10 @@ function UserHeader() {
   return (
     <nav className="bg-gray-900 text-white px-4 py-3 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
+        {/* Changed text from "Dashboard" to "Affiliate++" (your app's name) */}
+        {/* This link already points to "/", which redirects to /dashboard if logged in */}
         <Link to="/" className="text-xl font-semibold">
-          Dashboard
+          Affiliate++
         </Link>
 
         <div className="relative" ref={dropdownRef}>

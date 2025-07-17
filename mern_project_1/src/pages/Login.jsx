@@ -4,6 +4,7 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { serverEndpoint } from "../config/config";
 import { useDispatch } from "react-redux";
 import { SET_USER } from "../redux/user/actions";
+import { Link } from "react-router-dom"; // Import Link
 
 function Login() {
   const dispatch = useDispatch();
@@ -53,8 +54,8 @@ function Login() {
         );
         dispatch({ type: SET_USER, payload: response.data.user });
       } catch (error) {
-        console.error(error);
-        setErrors({ message: "Something went wrong, please try again" });
+        console.error("Login Error:", error);
+        setErrors({ message: error.response?.data?.message || "Something went wrong, please try again" });
       }
     }
   };
@@ -69,18 +70,17 @@ function Login() {
 
       dispatch({ type: SET_USER, payload: response.data.user });
     } catch (error) {
-      console.error(error);
-      setErrors({ message: 'Error processing Google auth, please try again' });
+      console.error("Google Success Handler Error:", error);
+      setErrors({ message: error.response?.data?.message || 'Error processing Google auth, please try again' });
     }
   };
 
   const handleGoogleError = (error) => {
-    console.error(error);
+    console.error("Google Auth Error:", error);
     setErrors({ message: 'Error in Google authorization flow, please try again' });
   };
-  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
-  return (
 
+  return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <div className="w-full max-w-md bg-white rounded shadow p-6">
         <h2 className="text-2xl font-semibold text-center mb-6">Sign in to Continue</h2>
@@ -140,8 +140,17 @@ function Login() {
 
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
           <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
-
         </GoogleOAuthProvider>
+
+        {/* Add Register button/link */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-sm">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-blue-600 hover:underline font-medium">
+              Register here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

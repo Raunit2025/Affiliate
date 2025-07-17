@@ -11,4 +11,3 @@ const USER_ROLES = [
 module.exports = {
     USER_ROLES, VIEWER_ROLE, ADMIN_ROLE, DEVELOPER_ROLE
 };
-

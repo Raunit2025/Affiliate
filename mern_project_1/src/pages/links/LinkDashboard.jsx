@@ -16,7 +16,7 @@ function LinksDashboard() {
 
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const permission = usePermission();
 
@@ -30,6 +30,7 @@ function LinksDashboard() {
   const handleShowDeleteModal = (linkId) => {
     setFormData((prev) => ({ ...prev, id: linkId }));
     setShowDeleteModal(true);
+    setErrors({}); // Clear errors when opening delete modal
   };
 
   const handleCloseDeleteModal = () => setShowDeleteModal(false);
@@ -39,8 +40,9 @@ function LinksDashboard() {
       await axios.delete(`${serverEndpoint}/links/${formData.id}`, { withCredentials: true });
       await fetchLinks();
       handleCloseDeleteModal();
-    } catch {
-      setErrors({ message: 'Unable to delete the link, please try again' });
+    } catch (error) {
+      console.error("Delete Link Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || 'Unable to delete the link, please try again' }); // More specific error message
     }
   };
 
@@ -57,6 +59,7 @@ function LinksDashboard() {
       setFormData({ campaignTitle: "", originalUrl: "", category: "" });
     }
     setShowModal(true);
+    setErrors({}); // Clear errors when opening modal
   };
 
   const handleCloseModal = () => setShowModal(false);
@@ -108,8 +111,9 @@ function LinksDashboard() {
 
         await fetchLinks();
         handleCloseModal();
-      } catch {
-        setErrors({ message: 'Unable to add the Link, please try again' });
+      } catch (error) {
+        console.error("Submit Link Error:", error); // Improved logging
+        setErrors({ message: error.response?.data?.message || 'Unable to add/update the link, please try again' }); // More specific error message
       }
     }
   };
@@ -118,8 +122,9 @@ function LinksDashboard() {
     try {
       const res = await axios.get(`${serverEndpoint}/links`, { withCredentials: true });
       setLinksData(res.data.data);
-    } catch {
-      setErrors({ message: 'Unable to fetch links at the moment. Please try again' });
+    } catch (error) {
+      console.error("Fetch Links Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || 'Unable to fetch links at the moment. Please try again' }); // More specific error message
     }
   };
 

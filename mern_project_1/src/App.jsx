@@ -28,22 +28,24 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   const isUserLoggedIn = async () => {
-  try {
-    const res = await axios.post(
-      `${serverEndpoint}/auth/is-user-logged-in`,
-      {},
-      { withCredentials: true }
-    );
-    dispatch({
-      type: SET_USER,
-      payload: res.data.user,
-    });
-  } catch (error) {
-    console.error("Auth Check Failed", error);
-    alert("🚫 Backend not reachable. Please ensure your backend server is running.");
-  } finally {
-    setLoading(false);
-  }
+    try {
+      const res = await axios.post(
+        `${serverEndpoint}/auth/is-user-logged-in`,
+        {},
+        { withCredentials: true }
+      );
+      dispatch({
+        type: SET_USER,
+        payload: res.data.user,
+      });
+    } catch (error) {
+      console.error("Auth Check Failed:", error); // Replaced alert with console.error
+      // In a real application, you might use a toast notification or
+      // display a message on the UI instead of a blocking alert.
+      // alert("🚫 Backend not reachable. Please ensure your backend server is running.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -53,12 +55,7 @@ function App() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        return (
-        <div className="flex justify-center items-center h-screen">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
-        </div>
-        );
-
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }

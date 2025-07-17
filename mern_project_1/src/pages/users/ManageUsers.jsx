@@ -6,7 +6,9 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { serverEndpoint } from "../../config/config";
 
-const USER_ROLES = ['viewer', 'developer'];
+// Added 'admin' to the USER_ROLES array for frontend selection
+// Ideally, these roles would be fetched from the backend to ensure consistency.
+const USER_ROLES = ['viewer', 'developer', 'admin'];
 
 function ManageUsers() {
   const [errors, setErrors] = useState({});
@@ -26,6 +28,7 @@ function ManageUsers() {
     }
     setIsEdit(isEdit);
     setShowModal(true);
+    setErrors({}); // Clear errors when opening modal
   };
 
   const handleModalClose = () => {
@@ -36,6 +39,7 @@ function ManageUsers() {
   const handleDeleteModalShow = (userId) => {
     setFormData({ id: userId });
     setShowDeleteModal(true);
+    setErrors({}); // Clear errors when opening delete modal
   };
 
   const handleDeleteModalClose = () => {
@@ -48,8 +52,9 @@ function ManageUsers() {
       await axios.delete(`${serverEndpoint}/users/${formData.id}`, { withCredentials: true });
       setFormData({ email: '', role: '', name: '' });
       fetchUsers();
-    } catch {
-      setErrors({ message: 'Something went wrong, please try again' });
+    } catch (error) {
+      console.error("Delete User Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || 'Something went wrong, please try again' }); // More specific error message
     } finally {
       handleDeleteModalClose();
       setFormLoading(false);
@@ -84,8 +89,9 @@ function ManageUsers() {
       }
       setFormData({ email: '', name: '', role: '' });
       fetchUsers();
-    } catch {
-      setErrors({ message: 'Something went wrong, please try again' });
+    } catch (error) {
+      console.error("Submit User Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || 'Something went wrong, please try again' }); // More specific error message
     } finally {
       handleModalClose();
       setFormLoading(false);
@@ -97,8 +103,9 @@ function ManageUsers() {
       setLoading(true);
       const res = await axios.get(`${serverEndpoint}/users`, { withCredentials: true });
       setUsersData(res.data);
-    } catch {
-      setErrors({ message: 'Unable to fetch users' });
+    } catch (error) {
+      console.error("Fetch Users Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || 'Unable to fetch users' }); // More specific error message
     } finally {
       setLoading(false);
     }
@@ -163,6 +170,7 @@ function ManageUsers() {
                   className={`w-full border px-3 py-2 rounded ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={isEdit} // Disable email edit for existing users
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>

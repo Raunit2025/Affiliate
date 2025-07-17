@@ -14,6 +14,8 @@ function PurchaseCredit() {
 
   const handleBuyCredits = async (credits) => {
     setShowModal(false);
+    setErrors({}); // Clear errors
+    setMessage(null); // Clear messages
     try {
       const { data } = await axios.post(
         `${serverEndpoint}/payments/create-order`,
@@ -30,7 +32,7 @@ function PurchaseCredit() {
         order_id: data.order.id,
         handler: async (response) => {
           try {
-            const { data } = await axios.post(
+            const { data: userData } = await axios.post( // Renamed data to userData to avoid conflict
               `${serverEndpoint}/payments/verify-order`,
               {
                 razorpay_order_id: response.razorpay_order_id,
@@ -41,10 +43,11 @@ function PurchaseCredit() {
               { withCredentials: true }
             );
 
-            dispatch({ type: SET_USER, payload: data });
+            dispatch({ type: SET_USER, payload: userData.user }); // Access user from userData.user
             setMessage(`${credits} credits added!`);
-          } catch {
-            setErrors({ message: "Unable to purchase credits, please try again" });
+          } catch (error) {
+            console.error("Verify Order Error:", error); // Improved logging
+            setErrors({ message: error.response?.data?.message || "Unable to purchase credits, please try again" });
           }
         },
         theme: { color: "#3399cc" },
@@ -52,12 +55,15 @@ function PurchaseCredit() {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-    } catch {
-      setErrors({ message: "Unable to purchase credits, please try again" });
+    } catch (error) {
+      console.error("Create Order Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || "Unable to purchase credits, please try again" });
     }
   };
 
   const handleSubscribe = async (planKey) => {
+    setErrors({}); // Clear errors
+    setMessage(null); // Clear messages
     try {
       const { data } = await axios.post(
         `${serverEndpoint}/payments/create-subscription`,
@@ -73,15 +79,16 @@ function PurchaseCredit() {
         subscription_id: data.subscription.id,
         handler: async function (response) {
           try {
-            const user = await axios.post(
+            const { data: userData } = await axios.post( // Renamed data to userData
               `${serverEndpoint}/payments/verify-subscription`,
               { subscription_id: response.razorpay_subscription_id },
               { withCredentials: true }
             );
-            dispatch({ type: SET_USER, payload: user.data });
+            dispatch({ type: SET_USER, payload: userData.user }); // Access user from userData.user
             setMessage("Subscription activated");
-          } catch {
-            setErrors({ message: "Unable to activate subscription, please try again" });
+          } catch (error) {
+            console.error("Verify Subscription Error:", error); // Improved logging
+            setErrors({ message: error.response?.data?.message || "Unable to activate subscription, please try again" });
           }
         },
         theme: { color: "#3399cc" },
@@ -89,8 +96,9 @@ function PurchaseCredit() {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-    } catch {
-      setErrors({ message: "Failed to create subscription" });
+    } catch (error) {
+      console.error("Create Subscription Error:", error); // Improved logging
+      setErrors({ message: error.response?.data?.message || "Failed to create subscription" });
     }
   };
 

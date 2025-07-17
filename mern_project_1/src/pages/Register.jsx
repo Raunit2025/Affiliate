@@ -57,9 +57,9 @@ function Register() {
 
       try {
         const response = await axios.post(`${serverEndpoint}/auth/register`, body, config);
-        dispatch({ type: SET_USER, payload: response.data });
+        dispatch({ type: SET_USER, payload: response.data.user }); // Access user from response.data
       } catch (error) {
-        console.error(error);
+        console.error("Registration Error:", error); // Improved logging
         setErrors({
           message:
             error.response?.data?.message || 'Registration failed',
@@ -72,18 +72,19 @@ function Register() {
   const handleGoogleSignin = async (credentialResponse) => {
     try {
       const response = await axios.post(
-        `${serverEndpoint}/auth/google`,
-        { token: credentialResponse.credential },
+        `${serverEndpoint}/auth/google-auth`, // Corrected endpoint
+        { credential: credentialResponse.credential }, // Send credential, not token
         { withCredentials: true }
       );
-      dispatch({ type: SET_USER, payload: response.data });
+      dispatch({ type: SET_USER, payload: response.data.user }); // Access user from response.data
     } catch (error) {
-      console.error(error);
+      console.error("Google Sign-in Error:", error); // Improved logging
       setErrors({ message: 'Google Sign-in failed' });
     }
   };
 
-  const handleGoogleSigninFailure = () => {
+  const handleGoogleSigninFailure = (error) => { // Added error parameter
+    console.error("Google Sign-in Failure:", error); // Improved logging
     setErrors({ message: 'Something went wrong while Google Sign-in' });
   };
 
