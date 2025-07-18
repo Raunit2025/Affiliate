@@ -5,7 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
 const { attemptToRefreshToken } = require('../util/authUtil');
 const { VIEWER_ROLE, ADMIN_ROLE } = require('../constants/userConstants');
-const send= require('../service/emailService'); // Import the email service
+const sendEmail = require('../service/emailService'); // Import the email service
 
 const secret = process.env.JWT_SECRET;
 const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
@@ -233,7 +233,7 @@ const authController = {
         try {
             const { email } = request.body;
             console.log("email",email);
-            
+
             const user = await Users.findOne({ email });
             if (!user) {
                 // Return a generic success message to prevent email enumeration attacks
@@ -244,7 +244,7 @@ const authController = {
             const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
             // Set expiry for 10 minutes
             console.log("reset code",resetCode);
-            
+
             const resetExpires = new Date(Date.now() + 10 * 60 * 1000);
 
             user.resetPasswordCode = resetCode;
@@ -254,9 +254,10 @@ const authController = {
             const emailSubject = 'Affiliate++ Password Reset Code';
             const emailBody = `Your password reset code is: ${resetCode}\n\nThis code is valid for 10 minutes.`;
 
-            const response=await send(email, emailSubject, emailBody);
-            console.log("email response",response);
-            
+            // Renamed 'response' to 'emailSendResponse' to avoid conflict with Express 'response' object
+            const emailSendResponse = await sendEmail(email, emailSubject, emailBody);
+            console.log("email response", emailSendResponse);
+
 
             response.status(200).json({ message: 'If a user with that email exists, a password reset code has been sent.' });
         } catch (error) {
