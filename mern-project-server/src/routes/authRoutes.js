@@ -27,7 +27,7 @@ const resetPasswordValidator = [
         .isLength({ min: 6, max: 6 }).withMessage('Reset code must be 6 digits long'),
     body('newPassword')
         .notEmpty().withMessage('New password is required')
-        .isLength({ min: 8 }).withMessage('New password must be at least 8 characters long')
+        .isLength({ min: 6 }).withMessage('New password must be at least 6 characters long')
 ];
 
 router.post('/login', loginValidator, authController.login);

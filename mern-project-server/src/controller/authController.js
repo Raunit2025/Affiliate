@@ -5,7 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
 const { attemptToRefreshToken } = require('../util/authUtil');
 const { VIEWER_ROLE, ADMIN_ROLE } = require('../constants/userConstants');
-const sendEmail = require('../service/emailService'); // Import the email service
+const send= require('../service/emailService'); // Import the email service
 
 const secret = process.env.JWT_SECRET;
 const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
@@ -232,7 +232,8 @@ const authController = {
     sendResetPasswordToken: async (request, response) => {
         try {
             const { email } = request.body;
-
+            console.log("email",email);
+            
             const user = await Users.findOne({ email });
             if (!user) {
                 // Return a generic success message to prevent email enumeration attacks
@@ -242,6 +243,8 @@ const authController = {
             // Generate a 6-digit code
             const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
             // Set expiry for 10 minutes
+            console.log("reset code",resetCode);
+            
             const resetExpires = new Date(Date.now() + 10 * 60 * 1000);
 
             user.resetPasswordCode = resetCode;
@@ -251,12 +254,14 @@ const authController = {
             const emailSubject = 'Affiliate++ Password Reset Code';
             const emailBody = `Your password reset code is: ${resetCode}\n\nThis code is valid for 10 minutes.`;
 
-            await sendEmail(user.email, emailSubject, emailBody);
+            const response=await send(email, emailSubject, emailBody);
+            console.log("email response",response);
+            
 
             response.status(200).json({ message: 'If a user with that email exists, a password reset code has been sent.' });
         } catch (error) {
             console.error('Send Reset Password Token Error:', error);
-            response.status(500).json({ error: 'Internal server error' });
+            response.status(500).json({ error: 'Internal server error in mail controller' });
         }
     },
 
