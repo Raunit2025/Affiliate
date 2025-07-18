@@ -25,7 +25,7 @@ const authMiddleware = {
             response.cookie('jwtToken', newAccessToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production', // Corrected
-              sameSite: 'Lax',
+              sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
               path: '/'
             });
 

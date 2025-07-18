@@ -49,7 +49,7 @@ const authController = {
             response.cookie('jwtToken', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'Lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
                 path: '/',
             });
 
@@ -58,7 +58,7 @@ const authController = {
             response.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'Lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
                 path: '/',
             });
             response.json({ user: user, message: 'User authenticated' });
@@ -91,7 +91,7 @@ const authController = {
                         response.cookie('jwtToken', newAccessToken, {
                             httpOnly: true,
                             secure: process.env.NODE_ENV === 'production',
-                            sameSite: 'Lax',
+                            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
                             path: '/',
                         });
 
@@ -156,7 +156,7 @@ const authController = {
             response.cookie('jwtToken', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'Lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
                 path: '/',
             });
             response.json({ message: 'User registered', user: userDetails });
@@ -209,7 +209,7 @@ const authController = {
             res.cookie('jwtToken', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'Lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
             });
 
             const refreshTokenPayload = user.toObject();
@@ -217,7 +217,7 @@ const authController = {
             res.cookie('refreshToken', refreshtoken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'Lax',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
                 path: '/',
             });
 
