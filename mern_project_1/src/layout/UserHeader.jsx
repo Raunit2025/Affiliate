@@ -28,8 +28,11 @@ function UserHeader() {
   return (
     <nav className="bg-gray-900 text-white px-4 py-3 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
-        <Link to="/" className="text-xl font-semibold">
-          Affiliate++
+        <Link to="/" className="flex items-center space-x-2">
+          <img src="/logo.png" alt="Affiliate++ Logo" className="h-10 w-10" />
+          <span className="text-xl font-semibold">
+            Affiliate++
+          </span>
         </Link>
 
         <div className="relative" ref={dropdownRef}>

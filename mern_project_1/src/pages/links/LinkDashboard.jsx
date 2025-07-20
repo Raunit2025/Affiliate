@@ -214,7 +214,7 @@ function LinksDashboard() {
 
       {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"> {/* MODIFIED bg-black/40 and ADDED backdrop-blur-sm */}
           <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
@@ -278,7 +278,7 @@ function LinksDashboard() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"> {/* MODIFIED bg-black/40 and ADDED backdrop-blur-sm */}
           <div className="bg-white p-6 rounded-md shadow-lg w-full max-w-sm">
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="mb-6">Are you sure you want to delete the link?</p>

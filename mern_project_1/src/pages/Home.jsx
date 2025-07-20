@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-950 via-blue-900 to-indigo-950 text-white">
-      
-      {/* Header (Navbar) */}
       <nav className="bg-gradient-to-r from-transparent to-black/30 backdrop-blur-sm sticky top-0 z-50 shadow-lg py-4">
-        {/* REMOVED: px-4 from this div */}
-        <div className="container mx-auto flex items-center justify-between"> 
-          <Link to="/" className="text-3xl font-extrabold text-blue-300 tracking-wider">
-            Affiliate++
+        <div className="container mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-3">
+            <img src="/logo.png" alt="Affiliate++ Logo" className="h-11 w-11" /> 
+            <span className="text-3xl font-extrabold text-blue-300 tracking-wider">
+              Affiliate++
+            </span>
           </Link>
 
           <div className="space-x-6">
@@ -28,7 +28,7 @@ function Home() {
 
       {/* Main Content (Hero Section) */}
       {/* REMOVED: px-4 and py-20 md:py-32 from main tag */}
-      <main className="flex-grow flex flex-col items-center justify-center text-center"> 
+      <main className="flex-grow flex flex-col items-center justify-center text-center">
         <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight text-blue-100 drop-shadow-lg">
           Affiliate++: Drive Your Success.
         </h1>
