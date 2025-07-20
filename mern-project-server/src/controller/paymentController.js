@@ -95,20 +95,17 @@ const paymentController = {
             }
 
             const plan = PLAN_IDS[plan_name];
-            const subscription = await razorpay.subscriptions.create({ // Added subscription variable
+            const subscription = await razorpay.subscriptions.create({
                 plan_id: plan.id,
                 customer_notify: 1,
-                // total_count: plan.totalBillingCycleCount, // Use 0 for indefinite subscriptions until canceled
-                                                          // or actual number of cycles if fixed term.
-                                                          // Assuming "Unlimited" means indefinite until canceled.
-                total_count: 0, // Set to 0 for auto-renewal until cancelled
+                total_count: plan.totalBillingCycleCount, // MODIFIED: Use the value from PLAN_IDS
                 notes: {
                     userId: request.user.id
                 }
             });
             response.json({ subscription: subscription })
         } catch (error) {
-            console.error('Create Subscription Error:', error); // Improved logging
+            console.error('Create Subscription Error:', error);
             response.status(500).json({
                 message: 'Internal server error'
             });

@@ -80,7 +80,7 @@ function ResetPassword() {
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = "New password is mandatory";
       isValid = false;
-    } else if (formData.newPassword.length < 8) {
+    } else if (formData.newPassword.length < 8) { // MODIFIED: Password must be at least 8 characters long
       newErrors.newPassword = "New password must be at least 8 characters long";
       isValid = false;
     }

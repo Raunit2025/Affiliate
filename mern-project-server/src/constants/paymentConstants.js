@@ -1,3 +1,4 @@
+// mern-project-server/src/constants/paymentConstants.js
 const CREDIT_PACKS = {
     10: 10,
     20: 20,
@@ -9,14 +10,12 @@ const PLAN_IDS = {
     UNLIMITED_YEARLY: {
         id: process.env.RAZORPAY_YEARLY_PLAN_ID,
         planName: 'Unlimited Yearly',
-        // totalBillingCycleCount: 5 // Set to 0 for indefinite subscriptions (auto-renew until cancelled)
-        totalBillingCycleCount: 0
+        totalBillingCycleCount: 30 // MODIFIED: Set to 30 years worth of cycles
     },
-    UNLIMITED_MONTHLY: { // Corrected typo UNILIMITED_MONTHLY to UNLIMITED_MONTHLY
+    UNLIMITED_MONTHLY: {
         id: process.env.RAZORPAY_MONTHLY_PLAN_ID,
         planName: 'Unlimited Monthly',
-        // totalBillingCycleCount: 12 // Set to 0 for indefinite subscriptions (auto-renew until cancelled)
-        totalBillingCycleCount: 0
+        totalBillingCycleCount: 360 // MODIFIED: Set to 30 years worth of cycles
     },
 };
 

@@ -33,6 +33,9 @@ function Register() {
     if (!formData.password.trim()) {
       newErrors.password = "Password is mandatory";
       isValid = false;
+    } else if (formData.password.length < 8) { // ADDED: Password length validation
+      newErrors.password = "Password must be at least 8 characters long";
+      isValid = false;
     }
 
     if (!formData.name.trim()) {

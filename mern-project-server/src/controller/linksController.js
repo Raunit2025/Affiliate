@@ -251,7 +251,7 @@ const linksController = {
             response.status(500).json({ error: 'Internal server error' });
         }
     },
-    analytics: async (request, response) => {
+     analytics: async (request, response) => {
         try {
             const { linkId, from, to } = request.body;
 
@@ -263,30 +263,44 @@ const linksController = {
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            // Check if the link belongs to the current user
-            if (link.user.toString() === currentUserId.toString()) {
-                const query = { linkId };
-                if (from && to) {
-                    query.clickedAt = { $gte: new Date(from), $lte: new Date(to) };
-                }
-                const data = await Clicks.find(query).sort({ clickedAt: -1 });
-                return response.json(data);
+            // Fetch the full user details to check credits/subscription for non-admins
+            const currentUserDetails = await Users.findById({ _id: currentUserId });
+            if (!currentUserDetails) {
+                // This case should ideally be caught by authMiddleware, but good to have a safeguard
+                return response.status(401).json({ error: 'User not found.' });
             }
 
-            // If not owner, check if current user is an admin managing the link's owner
-            if (isAdmin) {
+            // Check if the user has access to the link (either as owner or managing admin)
+            let hasLinkOwnershipOrAdminManagementAccess = false;
+            if (link.user.toString() === currentUserId.toString()) {
+                hasLinkOwnershipOrAdminManagementAccess = true;
+            } else if (isAdmin) {
                 const linkOwner = await Users.findById(link.user).select('adminId');
                 if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
-                    const query = { linkId };
-                    if (from && to) {
-                        query.clickedAt = { $gte: new Date(from), $lte: new Date(to) };
-                    }
-                    const data = await Clicks.find(query).sort({ clickedAt: -1 });
-                    return response.json(data);
+                    hasLinkOwnershipOrAdminManagementAccess = true;
                 }
             }
 
-            return response.status(403).json({ error: 'Forbidden: Unauthorized access to analytics' });
+            if (!hasLinkOwnershipOrAdminManagementAccess) {
+                return response.status(403).json({ error: 'Forbidden: Unauthorized access to this link\'s analytics' });
+            }
+
+            // NEW LOGIC: Enforce credit/subscription for non-admin users trying to view analytics
+            if (!isAdmin) {
+                const hasActiveSubscription = currentUserDetails.subscription && currentUserDetails.subscription.status === 'active';
+                if (currentUserDetails.credits < 1 && !hasActiveSubscription) {
+                    return response.status(403).json({
+                        message: 'Insufficient credit balance or no active subscription to view analytics.'
+                    });
+                }
+            }
+
+            const query = { linkId };
+            if (from && to) {
+                query.clickedAt = { $gte: new Date(from), $lte: new Date(to) };
+            }
+            const data = await Clicks.find(query).sort({ clickedAt: -1 });
+            return response.json(data);
         } catch (error) {
             console.error('Analytics Fetch Error:', error);
             return response.status(500).json({ message: 'Internal server error' });

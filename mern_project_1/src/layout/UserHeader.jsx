@@ -54,7 +54,26 @@ function UserHeader() {
           {isDropdownOpen && (
             <ul className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg z-50">
               <li>
-                {/* New: Reset Password Link */}
+                <Link
+                  to="/dashboard"
+                  className="block px-4 py-2 hover:bg-gray-100"
+                  onClick={() => setIsDropdownOpen(false)} // Close dropdown on click
+                >
+                  Dashboard
+                </Link>
+              </li>
+              {/* Add this new list item for Manage Payments */}
+              <li>
+                <Link
+                  to="/manage-payments"
+                  className="block px-4 py-2 hover:bg-gray-100"
+                  onClick={() => setIsDropdownOpen(false)} // Close dropdown on click
+                >
+                  Manage Payments
+                </Link>
+              </li>
+              <li>
+                {/* Reset Password Link */}
                 <button
                   onClick={handleResetPasswordClick}
                   className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -66,6 +85,7 @@ function UserHeader() {
                 <Link
                   to="/logout"
                   className="block px-4 py-2 hover:bg-gray-100"
+                  onClick={() => setIsDropdownOpen(false)} // Close dropdown on click
                 >
                   Logout
                 </Link>

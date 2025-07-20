@@ -1,3 +1,4 @@
+// mern_project_1/src/rbac/userPermissions.jsx
 import { useSelector } from "react-redux";
 
 export const ROLE_PERMISSIONS = {
@@ -7,7 +8,7 @@ export const ROLE_PERMISSIONS = {
         canDeleteUser: true,
         canEditUser: true,
         canViewLink: true,
-        canCreateLink: true,
+        canCreateLink: true, // Should be true
         canDeleteLink: true,
         canEditLink: true,
     },
@@ -17,9 +18,9 @@ export const ROLE_PERMISSIONS = {
         canDeleteUser: false,
         canEditUser: false,
         canViewLink: true,
-        canCreateLink: false,
-        canDeleteLink: false,
-        canEditLink: false,
+        canCreateLink: true, // THIS MUST BE TRUE
+        canDeleteLink: true,
+        canEditLink: true,
     },
     viewer: {
         canViewUser: true,
@@ -27,14 +28,12 @@ export const ROLE_PERMISSIONS = {
         canDeleteUser: false,
         canEditUser: false,
         canViewLink: true,
-        canCreateLink: false,
-        canDeleteLink: false,
-        canEditLink: false,
+        canCreateLink: true, // THIS MUST BE TRUE
+        canDeleteLink: true,
+        canEditLink: true,
     },
 };
 
-
-// Custom hook to return the applicable permissions of the logged in user.
 export const usePermission = () => {
     const user = useSelector((state) => state.userDetails);
     return ROLE_PERMISSIONS[user?.role] || {};
