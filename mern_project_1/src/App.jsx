@@ -18,7 +18,7 @@ import Logout from "./pages/Logout";
 import ManageUsers from "./pages/users/ManageUsers";
 import ManagePayments from "./pages/payments/ManagePayments";
 import AnalyticsDashboard from "./pages/links/AnalyticsDashboard";
-import ForgetPassword from "./pages/forgetPassword";
+import ForgetPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/ResetPassword";
 
 import UnauthorizedAccess from "./components/UnauthorizedAccess";
