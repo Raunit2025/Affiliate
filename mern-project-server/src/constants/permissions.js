@@ -19,12 +19,14 @@ const permissions = {
         'link:read',
         'payment:create',
         'link:create',
+        'link:delete',
     ],
     viewer: [
         'link:read',
         'user:read',
         'payment:create',
         'link:create',
+        'link:delete',
     ]
 };
 
