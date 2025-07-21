@@ -50,23 +50,50 @@ const linksController = {
 
     getAll: async (request, response) => {
         try {
+            const {
+                currentPage = 0, pageSize = 10, // Pagination
+                searchQuery = '', // Searching
+                sortField = 'createdAt', sortOrder = 'desc' // Sorting
+            } = request.query;
+
+            const skip = parseInt(currentPage) * parseInt(pageSize);
+            const limit = parseInt(pageSize);
+            const sort = { [sortField]: sortOrder === 'desc' ? -1 : 1 };
+
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            let queryConditions = { user: currentUserId }; // Default: User sees their own links
+            let finalQueryConditions = {}; // Initialize a single query object
 
+            // 1. Handle User Access Filtering: Determine who sees which links
             if (isAdmin) {
-                // Find users managed by this admin
+                // Admin sees their own links AND links of managed users
                 const managedUsers = await Users.find({ adminId: currentUserId }).select('_id');
                 const managedUserIds = managedUsers.map(u => u._id);
-                // Admin can see their own links and links of managed users
-                queryConditions = { user: { $in: [currentUserId, ...managedUserIds] } };
+                finalQueryConditions.user = { $in: [currentUserId, ...managedUserIds] };
+            } else {
+                // Non-admin users (viewer, developer) only see their own links
+                finalQueryConditions.user = currentUserId;
             }
 
-            const links = await Links
-                .find(queryConditions)
-                .sort({ createdAt: -1 });
-            response.json({ data: links });
+            // 2. Add Search Query Conditions (to the same query object)
+            if (searchQuery) {
+                finalQueryConditions.$or = [
+                    { campaignTitle: new RegExp(searchQuery, 'i') },
+                    { originalUrl: new RegExp(searchQuery, 'i') },
+                    { category: new RegExp(searchQuery, 'i') },
+                ];
+            }
+
+            // 3. Execute Mongoose Queries with the unified finalQueryConditions
+            const links = await Links.find(finalQueryConditions)
+                .sort(sort)
+                .skip(skip)
+                .limit(limit);
+
+            const total = await Links.countDocuments(finalQueryConditions); // Use the same unified query
+
+            response.json({ links, total });
         } catch (error) {
             console.error('Get All Links Error:', error);
             response.status(500).json({
