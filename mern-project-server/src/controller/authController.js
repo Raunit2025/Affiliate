@@ -69,8 +69,18 @@ const authController = {
     },
 
     logout: (request, response) => {
-        response.clearCookie('jwtToken', { path: '/' });
-        response.clearCookie('refreshToken', { path: '/' });
+        response.clearCookie('jwtToken', { 
+            httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+                path: '/',
+         });
+        response.clearCookie('refreshToken', { 
+            httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+                path: '/',
+         });
         response.json({ message: 'Logout successfull' });
     },
 
