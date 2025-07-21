@@ -4,7 +4,7 @@ const { VIEWER_ROLE } = require('../constants/userConstants'); // Import viewer 
 const subscriptionSchema = new mongoose.Schema({
     id: { type: String }, // Razorpay subscription ID
     planId: { type: String },
-    status: { type: String, default: 'pending' },
+    status: { type: String },
     start: { type: Date },
     end: { type: Date },
     lastBillDate: { type: Date },
