@@ -81,22 +81,25 @@ Companies managing multiple affiliates can provide dashboards to each promoter w
    ```bash
    git clone https://github.com/yourusername/affiliate-plus-plus.git
    cd affiliate-plus-plus
+   ```
 Install dependencies
 
 Server
 
-bash
+```bash
 Copy
 Edit
 cd server
 npm install
+```
 Client
 
-bash
+```bash
 Copy
 Edit
 cd client
 npm install
+```
 Set environment variables
 
 Create .env files in both server/ and client/ with necessary keys:
@@ -108,11 +111,12 @@ MONGO_URI=your_mongodb_connection
 JWT_SECRET=your_jwt_secret
 Run the project
 
-bash
+```bash
 Copy
 Edit
 # In root folder
 npm run dev
+```
 🤝 Contributing
 Contributions are welcome! To contribute:
 
