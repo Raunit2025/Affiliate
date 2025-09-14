@@ -1,8 +1,3 @@
-// mern-project-server/src/constants/permissions.js
-
-// REMOVE THE FOLLOWING LINE (it should NOT be here in a backend file)
-// import { useSelector } from "react-redux";
-
 const permissions = {
     admin: [
         'user:create',
