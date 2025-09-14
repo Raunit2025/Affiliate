@@ -26,8 +26,6 @@ function Home() {
         </div>
       </nav>
 
-      {/* Main Content (Hero Section) */}
-      {/* REMOVED: px-4 and py-20 md:py-32 from main tag */}
       <main className="flex-grow flex flex-col items-center justify-center text-center">
         <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight text-blue-100 drop-shadow-lg">
           Affiliate++: Drive Your Success.
@@ -35,7 +33,6 @@ function Home() {
         <p className="text-xl text-blue-200 mb-10 max-w-2xl font-light leading-relaxed">
           The ultimate platform to create, organize, and track your affiliate links with powerful analytics and campaign management.
         </p>
-        {/* ADDED: A small horizontal padding to buttons container to prevent text from touching very edge on smallest screens */}
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 px-4">
           <Link
             to="/login"

@@ -1,4 +1,4 @@
-// mern_project_1/src/rbac/userPermissions.jsx
+
 import { useSelector } from "react-redux";
 
 export const ROLE_PERMISSIONS = {
@@ -8,7 +8,7 @@ export const ROLE_PERMISSIONS = {
         canDeleteUser: true,
         canEditUser: true,
         canViewLink: true,
-        canCreateLink: true, // Should be true
+        canCreateLink: true,
         canDeleteLink: true,
         canEditLink: true,
     },
@@ -18,7 +18,7 @@ export const ROLE_PERMISSIONS = {
         canDeleteUser: false,
         canEditUser: false,
         canViewLink: true,
-        canCreateLink: true, // THIS MUST BE TRUE
+        canCreateLink: true,
         canDeleteLink: true,
         canEditLink: true,
     },
@@ -28,7 +28,7 @@ export const ROLE_PERMISSIONS = {
         canDeleteUser: false,
         canEditUser: false,
         canViewLink: true,
-        canCreateLink: true, // THIS MUST BE TRUE
+        canCreateLink: true,
         canDeleteLink: true,
         canEditLink: true,
     },

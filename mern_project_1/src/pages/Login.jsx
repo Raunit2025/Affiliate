@@ -152,7 +152,6 @@ function Login() {
               Register here
             </Link>
           </p>
-          {/* New: Forgot Password Link */}
           <p className="text-gray-600 text-sm">
             <Link to="/forgot-password" className="text-blue-600 hover:underline font-medium">
               Forgot Password?

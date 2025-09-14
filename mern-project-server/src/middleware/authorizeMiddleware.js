@@ -2,7 +2,6 @@ const {permissions} = require("../constants/permissions");
 
 const authorize = (requiredPermission) => {
     return (request, response, next) => {
-        // Authmiddleware will run before this middleware
         const user = request.user;
 
         if (!user) {

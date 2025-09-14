@@ -11,15 +11,14 @@ function PurchaseCredit() {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false); // New state to track SDK loading
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   useEffect(() => {
-    // Function to load the Razorpay script
     const loadRazorpayScript = () => {
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.onload = () => {
-        setRazorpayLoaded(true); // Set to true once the script is loaded
+        setRazorpayLoaded(true);
       };
       script.onerror = () => {
         setErrors({ message: "Failed to load Razorpay SDK. Please try again." });
@@ -27,18 +26,17 @@ function PurchaseCredit() {
       document.body.appendChild(script);
     };
 
-    // Load the script if it's not already loaded
     if (!window.Razorpay && !razorpayLoaded) {
       loadRazorpayScript();
     } else if (window.Razorpay) {
-      setRazorpayLoaded(true); // If already available, set flag to true
+      setRazorpayLoaded(true);
     }
   }, [razorpayLoaded]);
 
   const handleBuyCredits = async (credits) => {
     setShowModal(false);
-    setErrors({}); // Clear errors
-    setMessage(null); // Clear messages
+    setErrors({});
+    setMessage(null);
 
     if (!razorpayLoaded || !window.Razorpay) {
       setErrors({ message: "Razorpay SDK is not loaded. Please try again in a moment." });
@@ -61,7 +59,7 @@ function PurchaseCredit() {
         order_id: data.order.id,
         handler: async (response) => {
           try {
-            const { data: userData } = await axios.post( // Renamed data to userData to avoid conflict
+            const { data: userData } = await axios.post(
               `${serverEndpoint}/payments/verify-order`,
               {
                 razorpay_order_id: response.razorpay_order_id,
@@ -72,33 +70,31 @@ function PurchaseCredit() {
               { withCredentials: true }
             );
 
-            dispatch({ type: SET_USER, payload: userData.user }); // Access user from userData.user
+            dispatch({ type: SET_USER, payload: userData.user });
             setMessage(`${credits} credits added!`);
           } catch (error) {
-            console.error("Verify Order Error:", error); // Improved logging
+            console.error("Verify Order Error:", error);
             setErrors({ message: error.response?.data?.message || "Unable to purchase credits, please try again" });
           }
         },
         theme: { color: "#3399cc" },
-        // Add prefill for credit purchase as well, for consistency
         prefill: {
             name: userDetails.name,
             email: userDetails.email,
-            // contact: '9999999999' // Add if you collect phone number for users
         },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error("Create Order Error:", error); // Improved logging
+      console.error("Create Order Error:", error);
       setErrors({ message: error.response?.data?.message || "Unable to purchase credits, please try again" });
     }
   };
 
   const handleSubscribe = async (planKey) => {
-    setErrors({}); // Clear errors
-    setMessage(null); // Clear messages
+    setErrors({});
+    setMessage(null);
 
     if (!razorpayLoaded || !window.Razorpay) {
       setErrors({ message: "Razorpay SDK is not loaded. Please try again in a moment." });
@@ -120,7 +116,7 @@ function PurchaseCredit() {
         subscription_id: data.subscription.id,
         handler: async function (response) {
           try {
-            const { data: userData } = await axios.post( // Renamed data to userData
+            const { data: userData } = await axios.post(
               `${serverEndpoint}/payments/verify-subscription`,
               { subscription_id: response.razorpay_subscription_id },
               { withCredentials: true }
@@ -128,25 +124,24 @@ function PurchaseCredit() {
             dispatch({ type: SET_USER, payload: userData.user });
             setMessage("Subscription activated");
           } catch (error) {
-            console.error("Verify Subscription Error:", error); // Improved logging
+            console.error("Verify Subscription Error:", error);
             setErrors({ message: error.response?.data?.message || "Unable to activate subscription, please try again" });
           }
         },
         theme: { color: "#3399cc" },
-        prefill: { // ADDED: prefill object with user details
+        prefill: {
             name: userDetails.name,
             email: userDetails.email,
-            // contact: '9999999999' // Add if you collect phone number for users
         },
         notes: {
-            address: 'Razorpay Corporate Office' // Example note, can be omitted or customized
+            address: 'Razorpay Corporate Office'
         }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error("Create Subscription Error:", error); // Improved logging
+      console.error("Create Subscription Error:", error);
       setErrors({ message: error.response?.data?.message || "Failed to create subscription" });
     }
   };
@@ -228,7 +223,7 @@ function PurchaseCredit() {
           </div>
         </div>
 
-        {/* Modal (custom Tailwind instead of react-bootstrap) */}
+        {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

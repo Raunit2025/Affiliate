@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { serverEndpoint } from "../config/config"; // Corrected import path
+import { serverEndpoint } from "../config/config";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -9,9 +9,8 @@ function ResetPassword() {
   const location = useLocation();
   const userDetails = useSelector((state) => state.userDetails);
 
-  // Determine initial email based on navigation state or Redux userDetails
   const initialEmail = location.state?.email || userDetails?.email || "";
-  const isEmailFieldHidden = !!userDetails?.email; // Hide if logged in
+  const isEmailFieldHidden = !!userDetails?.email; 
 
   const [formData, setFormData] = useState({
     email: initialEmail,
@@ -22,7 +21,6 @@ function ResetPassword() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // If coming from UserHeader (logged in), automatically send reset token
   useEffect(() => {
     if (userDetails?.email && location.state?.fromUserHeader) {
       const sendTokenAutomatically = async () => {
@@ -30,7 +28,6 @@ function ResetPassword() {
         setErrors({});
         setMessage(null);
         try {
-          // Call the new backend API to send the reset token
           const response = await axios.post(
             `${serverEndpoint}/auth/send-reset-password-token`,
             { email: userDetails.email },
@@ -50,7 +47,7 @@ function ResetPassword() {
       };
       sendTokenAutomatically();
     }
-  }, [userDetails, location.state?.fromUserHeader]); // Run only once when component mounts if conditions met
+  }, [userDetails, location.state?.fromUserHeader]); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +77,7 @@ function ResetPassword() {
     if (!formData.newPassword.trim()) {
       newErrors.newPassword = "New password is mandatory";
       isValid = false;
-    } else if (formData.newPassword.length < 8) { // MODIFIED: Password must be at least 8 characters long
+    } else if (formData.newPassword.length < 8) {
       newErrors.newPassword = "New password must be at least 8 characters long";
       isValid = false;
     }
@@ -98,7 +95,6 @@ function ResetPassword() {
     setMessage(null);
 
     try {
-      // Call the new backend API to reset the password
       const response = await axios.post(
         `${serverEndpoint}/auth/reset-password`,
         {
@@ -109,10 +105,9 @@ function ResetPassword() {
         { withCredentials: true }
       );
       setMessage(response.data.message);
-      // Optionally redirect to login page after successful reset
       setTimeout(() => {
         navigate("/login");
-      }, 3000); // Redirect after 3 seconds
+      }, 3000);
     } catch (error) {
       console.error("Reset Password Error:", error);
       setErrors({
@@ -144,7 +139,7 @@ function ResetPassword() {
         )}
 
         <form onSubmit={handleSubmit}>
-          {!isEmailFieldHidden && ( // Conditionally render email field
+          {!isEmailFieldHidden && (
             <div className="mb-4">
               <label
                 htmlFor="email"
@@ -162,7 +157,7 @@ function ResetPassword() {
                   errors.email ? "border-red-500" : "border-gray-300"
                 }`}
                 required
-                disabled={isEmailFieldHidden} // Disable if hidden
+                disabled={isEmailFieldHidden}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">{errors.email}</p>

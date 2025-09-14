@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { serverEndpoint } from "../config/config";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom"; // ADDED: Import Link component
+import { Link } from "react-router-dom"; 
 
 function ForgetPassword() {
   const [email, setEmail] = useState("");
@@ -31,15 +31,12 @@ function ForgetPassword() {
     setMessage(null);
 
     try {
-      // Call the new backend API to send the reset token
       const response = await axios.post(
         `${serverEndpoint}/auth/send-reset-password-token`,
         { email },
         { withCredentials: true }
       );
-      setMessage(response.data.message); // Display the generic success message
-
-      // Navigate to ResetPassword page, passing the email
+      setMessage(response.data.message);
       navigate("/reset-password", { state: { email: email, fromForgot: true } });
 
     } catch (error) {

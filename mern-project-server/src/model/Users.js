@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const { VIEWER_ROLE } = require('../constants/userConstants'); // Import viewer role
+const { VIEWER_ROLE } = require('../constants/userConstants');
 
 const subscriptionSchema = new mongoose.Schema({
-    id: { type: String }, // Razorpay subscription ID
+    id: { type: String },
     planId: { type: String },
     status: { type: String },
     start: { type: Date },
@@ -23,7 +23,6 @@ const UsersSchema = new mongoose.Schema({
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', index: true, default: null },
     credits: { type: Number, default: 0 },
     subscription: { type: subscriptionSchema, default: () => ({}) },
-    // New fields for password reset
     resetPasswordCode: { type: String },
     resetPasswordExpires: { type: Date },
 });

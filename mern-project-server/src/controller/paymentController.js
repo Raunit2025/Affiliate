@@ -2,7 +2,6 @@ const Razorpay = require('razorpay');
 const { CREDIT_PACKS, PLAN_IDS } = require("../constants/paymentConstants");
 const crypto = require('crypto');
 const Users = require('../model/Users');
-// const {request} =  require('http'); // This import is unused and can be removed.
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -20,7 +19,7 @@ const paymentController = {
                 });
             }
 
-            const amount = CREDIT_PACKS[credits] * 100; // Convert to paisa
+            const amount = CREDIT_PACKS[credits] * 100;
 
             const order = await razorpay.orders.create({
                 amount: amount,
@@ -32,7 +31,7 @@ const paymentController = {
                 order: order
             });
         } catch (error) {
-            console.error('Create Order Error:', error); // Improved logging
+            console.error('Create Order Error:', error);
             response.status(500).json({
                 message: 'Internal server error'
             });
@@ -65,7 +64,6 @@ const paymentController = {
             user.credits += Number(credits);
             await user.save();
 
-            // Return filtered user object to avoid sending sensitive data to frontend
             const updatedUser = {
                 id: user._id,
                 name: user.name,
@@ -78,7 +76,7 @@ const paymentController = {
 
             response.json({ user: updatedUser });
         } catch (error) {
-            console.error('Verify Order Error:', error); // Improved logging
+            console.error('Verify Order Error:', error);
             response.status(500).json({
                 message: 'Internal server error'
             });
@@ -98,7 +96,7 @@ const paymentController = {
             const subscription = await razorpay.subscriptions.create({
                 plan_id: plan.id,
                 customer_notify: 1,
-                total_count: plan.totalBillingCycleCount, // MODIFIED: Use the value from PLAN_IDS
+                total_count: plan.totalBillingCycleCount,
                 notes: {
                     userId: request.user.id
                 }
@@ -120,16 +118,13 @@ const paymentController = {
                 return response.status(404).json({ message: 'User not found' });
             }
 
-            //We'll use this entry to prevent user from subscribing again
-            //from the UI, while we wait for activated event from razorpay.
             user.subscription = {
                 id: subscription_id,
                 planId: subscription.plan_id,
                 status: subscription.status
             };
-            await user.save(); // Corrected: Typo `use.save()` to `user.save()`
+            await user.save();
 
-            // Return filtered user object
             const updatedUser = {
                 id: user._id,
                 name: user.name,
@@ -142,7 +137,7 @@ const paymentController = {
             response.json({ user: updatedUser });
 
         } catch (error) {
-            console.error('Verify Subscription Error:', error); // Improved logging
+            console.error('Verify Subscription Error:', error);
             response.status(500).json({
                 message: 'Internal server error'
             });
@@ -162,7 +157,7 @@ const paymentController = {
             const data = await razorpay.subscriptions.cancel(subscription_id);
             response.json({ data: data });
         } catch (error) {
-            console.error('Cancel Subscription Error:', error); // Improved logging
+            console.error('Cancel Subscription Error:', error);
             response.status(500).json({
                 message: 'Internal server error'
             });
@@ -172,13 +167,12 @@ const paymentController = {
     handleWebhookEvent: async (request, response) => {
         try {
             console.log('Received webhook event');
-            // Headers are typically lowercase in Node.js request.headers object
-            const signature = request.headers['x-razorpay-signature']; // Corrected: request.header to request.headers
-            const body = request.body; // This is a Buffer from express.raw()
+            const signature = request.headers['x-razorpay-signature']; 
+            const body = request.body; 
 
             const expectedSignature = crypto
                 .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
-                .update(body) // body is already a Buffer, no need for toString() for crypto
+                .update(body) 
                 .digest('hex');
 
             if (expectedSignature !== signature) {
@@ -186,7 +180,7 @@ const paymentController = {
                 return response.status(400).send('Invalid Signature');
             }
 
-            const payload = JSON.parse(body.toString('utf8')); // Convert Buffer to string for JSON.parse
+            const payload = JSON.parse(body.toString('utf8')); 
             console.log('Webhook Payload:', JSON.stringify(payload, null, 2));
 
             const event = payload.event;
@@ -201,18 +195,18 @@ const paymentController = {
             let newStatus = '';
             switch (event) {
                 case 'subscription.activated':
-                    newStatus = 'active'; // Changed from 'activate' for consistency
+                    newStatus = 'active'; 
                     break;
                 case 'subscription.pending':
                     newStatus = 'pending';
                     break;
                 case 'subscription.cancelled':
-                    newStatus = 'canceled'; // Changed from 'cancelled' for consistency
+                    newStatus = 'canceled'; 
                     break;
                 case 'subscription.completed':
                     newStatus = 'completed';
                     break;
-                case 'subscription.halted': // Add other relevant Razorpay events
+                case 'subscription.halted': 
                     newStatus = 'halted';
                     break;
                 case 'subscription.paused':
@@ -220,7 +214,7 @@ const paymentController = {
                     break;
                 default:
                     console.log('Unhandled subscription event: ', event);
-                    return response.status(200).send("Unhandled event type"); // Return 200 for unhandled events
+                    return response.status(200).send("Unhandled event type"); 
             }
 
             const user = await Users.findOneAndUpdate(
@@ -230,34 +224,34 @@ const paymentController = {
                         'subscription.id': razorpaySubscriptionId,
                         'subscription.status': newStatus,
                         'subscription.planId': subscriptionData.plan_id,
-                        'subscription.start': subscriptionData.start_at // Corrected path
+                        'subscription.start': subscriptionData.start_at 
                             ? new Date(subscriptionData.start_at * 1000)
                             : null,
-                        'subscription.end': subscriptionData.end_at // Corrected path
+                        'subscription.end': subscriptionData.end_at 
                             ? new Date(subscriptionData.end_at * 1000)
                             : null,
-                        'subscription.lastBillDate': subscriptionData.current_start // Corrected path
+                        'subscription.lastBillDate': subscriptionData.current_start 
                             ? new Date(subscriptionData.current_start * 1000)
                             : null,
-                        'subscription.nextBillDate': subscriptionData.current_end // Corrected path
+                        'subscription.nextBillDate': subscriptionData.current_end 
                             ? new Date(subscriptionData.current_end * 1000)
                             : null,
-                        'subscription.paymentsMade': subscriptionData.paid_count, // Corrected path
-                        'subscription.paymentsRemaining': subscriptionData.remaining_count, // Corrected path
+                        'subscription.paymentsMade': subscriptionData.paid_count, 
+                        'subscription.paymentsRemaining': subscriptionData.remaining_count, 
                     }
                 },
-                { new: true, runValidators: true } // Add runValidators for schema validation
+                { new: true, runValidators: true } 
             );
 
             if(!user) {
                 console.warn('User not found for webhook update:', userId);
-                return response.status(404).send('User not found'); // Send 404 if user not found
+                return response.status(404).send('User not found'); 
             }
 
             console.log(`Updated subscription status for user ${user.email} to ${newStatus}`);
             return response.status(200).send(`Event processed for user: ${userId}`);
         } catch (error) {
-            console.error('Webhook Event Handler Error:', error); // Improved logging
+            console.error('Webhook Event Handler Error:', error); 
             response.status(500).json({
                 message: 'Internal server error'
             });

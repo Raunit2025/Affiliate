@@ -1,6 +1,6 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const express = require('express'); // Include the express module
+const express = require('express');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/authRoutes');
 const linksRoutes = require('./src/routes/linksRoutes');
@@ -12,10 +12,9 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch((error) => console.log(error));
 
-const app = express(); // Instantiate express app.
+const app = express();
 
 app.use((request, response, next) => {
-    // Skip json middleware for the webhook endpoint
     if (request.originalUrl.startsWith('/payments/webhook')) {
         return next();
     }

@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 
-const plainPasswordToTest = '12345678'; // REPLACE THIS with the password you are typing
-const hashedPasswordFromDB = '$2b$10$NKw4Sd1CBcW/GwX0AngzgOS14SZO5N52bpWGMBp6eC20lt8TwlfiG'; // REPLACE THIS with the hash copied from MongoDB
+const plainPasswordToTest = '12345678';
+const hashedPasswordFromDB = '$2b$10$NKw4Sd1CBcW/GwX0AngzgOS14SZO5N52bpWGMBp6eC20lt8TwlfiG';
 
 bcrypt.compare(plainPasswordToTest, hashedPasswordFromDB, (err, isMatch) => {
   if (err) {

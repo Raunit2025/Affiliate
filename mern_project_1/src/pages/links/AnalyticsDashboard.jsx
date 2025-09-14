@@ -50,7 +50,6 @@ function AnalyticsDashboard() {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
 
-  // ✅ Now using POST instead of GET
   const fetchAnalytics = async () => {
     try {
       const body = {

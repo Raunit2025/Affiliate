@@ -15,8 +15,6 @@ const authMiddleware = {
         request.user = user;
         return next();
       } catch (error) {
-        // Specifically handle TokenExpiredError if needed, otherwise general error handling
-        // For now, refreshing for any token verification error.
         const refreshToken = request.cookies?.refreshToken;
         if (refreshToken) {
           try {
@@ -24,7 +22,7 @@ const authMiddleware = {
 
             response.cookie('jwtToken', newAccessToken, {
               httpOnly: true,
-              secure: process.env.NODE_ENV === 'production', // Corrected
+              secure: process.env.NODE_ENV === 'production', 
               sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
               path: '/'
             });
@@ -32,8 +30,7 @@ const authMiddleware = {
             request.user = user;
             return next();
           } catch (refreshErr) {
-            console.error('Refresh token failed in middleware:', refreshErr.message); // Improved logging
-            // Clear invalid tokens if refresh fails to force re-login
+            console.error('Refresh token failed in middleware:', refreshErr.message); 
             response.clearCookie('jwtToken', { path: '/' });
             response.clearCookie('refreshToken', { path: '/' });
             return response.status(401).json({ error: 'Unauthorized access: Invalid refresh token' });
@@ -43,7 +40,7 @@ const authMiddleware = {
         }
       }
     } catch (error) {
-      console.error('Auth middleware error:', error); // Improved logging
+      console.error('Auth middleware error:', error); 
       response.status(500).json({ error: 'Internal server error' });
     }
   }

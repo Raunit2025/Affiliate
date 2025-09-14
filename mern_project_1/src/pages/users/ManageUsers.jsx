@@ -6,8 +6,6 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { serverEndpoint } from "../../config/config";
 
-// Added 'admin' to the USER_ROLES array for frontend selection
-// Ideally, these roles would be fetched from the backend to ensure consistency.
 const USER_ROLES = ['viewer', 'developer', 'admin'];
 
 function ManageUsers() {
@@ -28,7 +26,7 @@ function ManageUsers() {
     }
     setIsEdit(isEdit);
     setShowModal(true);
-    setErrors({}); // Clear errors when opening modal
+    setErrors({});
   };
 
   const handleModalClose = () => {
@@ -39,7 +37,7 @@ function ManageUsers() {
   const handleDeleteModalShow = (userId) => {
     setFormData({ id: userId });
     setShowDeleteModal(true);
-    setErrors({}); // Clear errors when opening delete modal
+    setErrors({});
   };
 
   const handleDeleteModalClose = () => {
@@ -53,8 +51,8 @@ function ManageUsers() {
       setFormData({ email: '', role: '', name: '' });
       fetchUsers();
     } catch (error) {
-      console.error("Delete User Error:", error); // Improved logging
-      setErrors({ message: error.response?.data?.message || 'Something went wrong, please try again' }); // More specific error message
+      console.error("Delete User Error:", error);
+      setErrors({ message: error.response?.data?.message || 'Something went wrong, please try again' });
     } finally {
       handleDeleteModalClose();
       setFormLoading(false);
@@ -90,7 +88,7 @@ function ManageUsers() {
       setFormData({ email: '', name: '', role: '' });
       fetchUsers();
     } catch (error) {
-      console.error("Submit User Error:", error); // Improved logging
+      console.error("Submit User Error:", error);
       setErrors({ message: error.response?.data?.message || 'Something went wrong, please try again' }); // More specific error message
     } finally {
       handleModalClose();
@@ -104,8 +102,8 @@ function ManageUsers() {
       const res = await axios.get(`${serverEndpoint}/users`, { withCredentials: true });
       setUsersData(res.data);
     } catch (error) {
-      console.error("Fetch Users Error:", error); // Improved logging
-      setErrors({ message: error.response?.data?.message || 'Unable to fetch users' }); // More specific error message
+      console.error("Fetch Users Error:", error);
+      setErrors({ message: error.response?.data?.message || 'Unable to fetch users' }); 
     } finally {
       setLoading(false);
     }
@@ -170,7 +168,7 @@ function ManageUsers() {
                   className={`w-full border px-3 py-2 rounded ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                   value={formData.email}
                   onChange={handleChange}
-                  disabled={isEdit} // Disable email edit for existing users
+                  disabled={isEdit} 
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>

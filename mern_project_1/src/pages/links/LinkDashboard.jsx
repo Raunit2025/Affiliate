@@ -39,7 +39,7 @@ function LinksDashboard() {
   const handleShowDeleteModal = (linkId) => {
     setFormData((prev) => ({ ...prev, id: linkId }));
     setShowDeleteModal(true);
-    setErrors({}); // Clear errors when opening delete modal
+    setErrors({}); 
   };
 
   const handleCloseDeleteModal = () => setShowDeleteModal(false);
@@ -50,7 +50,7 @@ function LinksDashboard() {
       await fetchLinks();
       handleCloseDeleteModal();
     } catch (error) {
-      console.error("Delete Link Error:", error); // Improved logging
+      console.error("Delete Link Error:", error); 
       setErrors({ message: error.response?.data?.message || 'Unable to delete the link, please try again' }); // More specific error message
     }
   };
@@ -68,7 +68,7 @@ function LinksDashboard() {
       setFormData({ campaignTitle: "", originalUrl: "", category: "" });
     }
     setShowModal(true);
-    setErrors({}); // Clear errors when opening modal
+    setErrors({}); 
   };
 
   const handleCloseModal = () => setShowModal(false);
@@ -121,7 +121,7 @@ function LinksDashboard() {
         await fetchLinks();
         handleCloseModal();
       } catch (error) {
-        console.error("Submit Link Error:", error); // Improved logging
+        console.error("Submit Link Error:", error);
         setErrors({ message: error.response?.data?.message || 'Unable to add/update the link, please try again' }); // More specific error message
       }
     }
@@ -146,15 +146,13 @@ function LinksDashboard() {
       setLinksData(res.data.data);
       setTotalRecords(res.data.total);
     } catch (error) {
-      console.error("Fetch Links Error:", error); // Improved logging
+      console.error("Fetch Links Error:", error); 
       setErrors({ message: error.response?.data?.message || 'Unable to fetch links at the moment. Please try again' }); // More specific error message
     }finally{
       setLoading(false);
     }
   };
 
-  //Anything mentioned in the dependency array of useEffect will trigger
-  //useEffect execute if there is any chnage in any value.
   useEffect(() => {
     fetchLinks();
   }, [currentPage, pageSize, searchQuery, sortModel]);
@@ -213,7 +211,6 @@ function LinksDashboard() {
         return(
           <button className='btn btn-outline-primary btn-sm'
             onClick={(e) => {
-              //Programmatic way to copy to the clipboard
               navigate.clipboard.writeText(shareURL);
             }}
           >
@@ -246,7 +243,7 @@ function LinksDashboard() {
       <div className='mb-2'>
         <input type="text" className='form-control' placeholder='Enter Campaign title, Original URL, or Category to search' onChange={(e) => {
           setSearchQuery(e.target.value);
-          setCurrentPage(0);//Reset to 0 on fresh search
+          setCurrentPage(0);
         }} 
       />
       </div>

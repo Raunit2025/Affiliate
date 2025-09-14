@@ -33,7 +33,7 @@ function Register() {
     if (!formData.password.trim()) {
       newErrors.password = "Password is mandatory";
       isValid = false;
-    } else if (formData.password.length < 8) { // ADDED: Password length validation
+    } else if (formData.password.length < 8) { 
       newErrors.password = "Password must be at least 8 characters long";
       isValid = false;
     }
@@ -60,9 +60,9 @@ function Register() {
 
       try {
         const response = await axios.post(`${serverEndpoint}/auth/register`, body, config);
-        dispatch({ type: SET_USER, payload: response.data.user }); // Access user from response.data
+        dispatch({ type: SET_USER, payload: response.data.user }); 
       } catch (error) {
-        console.error("Registration Error:", error); // Improved logging
+        console.error("Registration Error:", error);
         setErrors({
           message:
             error.response?.data?.message || 'Registration failed',
@@ -75,19 +75,19 @@ function Register() {
   const handleGoogleSignin = async (credentialResponse) => {
     try {
       const response = await axios.post(
-        `${serverEndpoint}/auth/google-auth`, // Corrected endpoint
-        { credential: credentialResponse.credential }, // Send credential, not token
+        `${serverEndpoint}/auth/google-auth`, 
+        { credential: credentialResponse.credential },
         { withCredentials: true }
       );
-      dispatch({ type: SET_USER, payload: response.data.user }); // Access user from response.data
+      dispatch({ type: SET_USER, payload: response.data.user });
     } catch (error) {
-      console.error("Google Sign-in Error:", error); // Improved logging
+      console.error("Google Sign-in Error:", error); 
       setErrors({ message: 'Google Sign-in failed' });
     }
   };
 
-  const handleGoogleSigninFailure = (error) => { // Added error parameter
-    console.error("Google Sign-in Failure:", error); // Improved logging
+  const handleGoogleSigninFailure = (error) => { 
+    console.error("Google Sign-in Failure:", error);
     setErrors({ message: 'Something went wrong while Google Sign-in' });
   };
 

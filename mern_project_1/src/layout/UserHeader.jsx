@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link, useNavigate } from "react-router-dom";
 
 function UserHeader() {
   const userDetails = useSelector((state) => state.userDetails);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -20,8 +19,7 @@ function UserHeader() {
   }, []);
 
   const handleResetPasswordClick = () => {
-    setIsDropdownOpen(false); // Close dropdown immediately
-    // Navigate to ResetPassword page, indicating it's from the user header
+    setIsDropdownOpen(false);
     navigate("/reset-password", { state: { fromUserHeader: true } });
   };
 
@@ -60,23 +58,21 @@ function UserHeader() {
                 <Link
                   to="/dashboard"
                   className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setIsDropdownOpen(false)} // Close dropdown on click
+                  onClick={() => setIsDropdownOpen(false)}
                 >
                   Dashboard
                 </Link>
               </li>
-              {/* Add this new list item for Manage Payments */}
               <li>
                 <Link
                   to="/manage-payments"
                   className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setIsDropdownOpen(false)} // Close dropdown on click
+                  onClick={() => setIsDropdownOpen(false)} 
                 >
                   Manage Payments
                 </Link>
               </li>
               <li>
-                {/* Reset Password Link */}
                 <button
                   onClick={handleResetPasswordClick}
                   className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -88,7 +84,7 @@ function UserHeader() {
                 <Link
                   to="/logout"
                   className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setIsDropdownOpen(false)} // Close dropdown on click
+                  onClick={() => setIsDropdownOpen(false)} 
                 >
                   Logout
                 </Link>

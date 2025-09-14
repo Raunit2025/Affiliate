@@ -102,12 +102,11 @@ function App() {
         }
       />
 
-      {/* New Route for Forget Password */}
       <Route
         path="/forgot-password"
         element={
           userDetails ? (
-            <Navigate to="/dashboard" /> // If logged in, no need for forgot password
+            <Navigate to="/dashboard" />
           ) : (
             <AppLayout>
               <ForgetPassword />
@@ -116,12 +115,9 @@ function App() {
         }
       />
 
-      {/* New Route for Reset Password */}
       <Route
         path="/reset-password"
         element={
-          // This page can be accessed by logged-out users (from forgot flow)
-          // or logged-in users (from dashboard reset)
           userDetails ? (
             <UserLayout>
               <ResetPassword />
