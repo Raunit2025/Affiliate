@@ -3,7 +3,7 @@ const Users = require("../model/Users");
 const axios = require('axios');
 const { getDeviceInfo } = require("../util/linkUtil");
 const Clicks = require("../model/Clicks");
-const { ADMIN_ROLE } = require('../constants/userConstants'); // Import admin role
+const { ADMIN_ROLE } = require('../constants/userConstants');
 
 const linksController = {
     create: async (request, response) => {
@@ -28,7 +28,7 @@ const linksController = {
                 campaignTitle: campaign_title,
                 originalUrl: original_url,
                 category: category,
-                user: request.user.id // Corrected: Link is always owned by the user who creates it
+                user: request.user.id 
             });
             await link.save();
 
@@ -51,9 +51,9 @@ const linksController = {
     getAll: async (request, response) => {
         try {
             const {
-                currentPage = 0, pageSize = 10, // Pagination
-                searchQuery = '', // Searching
-                sortField = 'createdAt', sortOrder = 'desc' // Sorting
+                currentPage = 0, pageSize = 10, 
+                searchQuery = '', 
+                sortField = 'createdAt', sortOrder = 'desc'
             } = request.query;
 
             const skip = parseInt(currentPage) * parseInt(pageSize);
@@ -63,20 +63,16 @@ const linksController = {
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            let finalQueryConditions = {}; // Initialize a single query object
+            let finalQueryConditions = {}; 
 
-            // 1. Handle User Access Filtering: Determine who sees which links
             if (isAdmin) {
-                // Admin sees their own links AND links of managed users
                 const managedUsers = await Users.find({ adminId: currentUserId }).select('_id');
                 const managedUserIds = managedUsers.map(u => u._id);
                 finalQueryConditions.user = { $in: [currentUserId, ...managedUserIds] };
             } else {
-                // Non-admin users (viewer, developer) only see their own links
                 finalQueryConditions.user = currentUserId;
             }
 
-            // 2. Add Search Query Conditions (to the same query object)
             if (searchQuery) {
                 finalQueryConditions.$or = [
                     { campaignTitle: new RegExp(searchQuery, 'i') },
@@ -85,13 +81,12 @@ const linksController = {
                 ];
             }
 
-            // 3. Execute Mongoose Queries with the unified finalQueryConditions
             const links = await Links.find(finalQueryConditions)
                 .sort(sort)
                 .skip(skip)
                 .limit(limit);
 
-            const total = await Links.countDocuments(finalQueryConditions); // Use the same unified query
+            const total = await Links.countDocuments(finalQueryConditions); 
 
             response.json({ links, total });
         } catch (error) {
@@ -117,12 +112,10 @@ const linksController = {
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            // Check if the link belongs to the current user
             if (link.user.toString() === currentUserId.toString()) {
                 return response.json({ data: link });
             }
 
-            // If not owner, check if current user is an admin managing the link's owner
             if (isAdmin) {
                 const linkOwner = await Users.findById(link.user).select('adminId');
                 if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
@@ -152,7 +145,6 @@ const linksController = {
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            // Check if the link belongs to the current user
             if (link.user.toString() === currentUserId.toString()) {
                 const { campaign_title, original_url, category } = request.body;
                 link = await Links.findByIdAndUpdate(linkId, {
@@ -163,7 +155,6 @@ const linksController = {
                 return response.json({ data: link });
             }
 
-            // If not owner, check if current user is an admin managing the link's owner
             if (isAdmin) {
                 const linkOwner = await Users.findById(link.user).select('adminId');
                 if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
@@ -199,13 +190,11 @@ const linksController = {
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            // Check if the link belongs to the current user
             if (link.user.toString() === currentUserId.toString()) {
                 await link.deleteOne();
                 return response.json({ message: 'Link deleted successfully' });
             }
 
-            // If not owner, check if current user is an admin managing the link's owner
             if (isAdmin) {
                 const linkOwner = await Users.findById(link.user).select('adminId');
                 if (linkOwner && linkOwner.adminId && linkOwner.adminId.toString() === currentUserId.toString()) {
@@ -290,14 +279,11 @@ const linksController = {
             const currentUserId = request.user.id;
             const isAdmin = request.user.role === ADMIN_ROLE;
 
-            // Fetch the full user details to check credits/subscription for non-admins
             const currentUserDetails = await Users.findById({ _id: currentUserId });
             if (!currentUserDetails) {
-                // This case should ideally be caught by authMiddleware, but good to have a safeguard
                 return response.status(401).json({ error: 'User not found.' });
             }
 
-            // Check if the user has access to the link (either as owner or managing admin)
             let hasLinkOwnershipOrAdminManagementAccess = false;
             if (link.user.toString() === currentUserId.toString()) {
                 hasLinkOwnershipOrAdminManagementAccess = true;
@@ -312,7 +298,6 @@ const linksController = {
                 return response.status(403).json({ error: 'Forbidden: Unauthorized access to this link\'s analytics' });
             }
 
-            // NEW LOGIC: Enforce credit/subscription for non-admin users trying to view analytics
             if (!isAdmin) {
                 const hasActiveSubscription = currentUserDetails.subscription && currentUserDetails.subscription.status === 'active';
                 if (currentUserDetails.credits < 1 && !hasActiveSubscription) {
