@@ -5,7 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { validationResult } = require('express-validator');
 const { attemptToRefreshToken } = require('../util/authUtil');
 const { VIEWER_ROLE, ADMIN_ROLE } = require('../constants/userConstants');
-const sendEmail = require('../service/emailService'); // Import the email service
+const sendEmail = require('../service/emailService'); 
 
 const secret = process.env.JWT_SECRET;
 const refreshSecret = process.env.JWT_REFRESH_TOKEN_SECRET;
@@ -237,8 +237,7 @@ const authController = {
             res.status(401).json({ message: 'Google authentication failed' });
         }
     },
-
-    // New API: sendResetPasswordToken
+    
     sendResetPasswordToken: async (request, response) => {
         try {
             const { email } = request.body;
@@ -246,13 +245,10 @@ const authController = {
 
             const user = await Users.findOne({ email });
             if (!user) {
-                // Return a generic success message to prevent email enumeration attacks
                 return response.status(200).json({ message: 'If a user with that email exists, a password reset code has been sent.' });
             }
 
-            // Generate a 6-digit code
             const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-            // Set expiry for 10 minutes
             console.log("reset code",resetCode);
 
             const resetExpires = new Date(Date.now() + 10 * 60 * 1000);
@@ -264,7 +260,6 @@ const authController = {
             const emailSubject = 'Affiliate++ Password Reset Code';
             const emailBody = `Your password reset code is: ${resetCode}\n\nThis code is valid for 10 minutes.`;
 
-            // Renamed 'response' to 'emailSendResponse' to avoid conflict with Express 'response' object
             const emailSendResponse = await sendEmail(email, emailSubject, emailBody);
             console.log("email response", emailSendResponse);
 
@@ -276,7 +271,6 @@ const authController = {
         }
     },
 
-    // New API: resetPassword
     resetPassword: async (request, response) => {
         try {
             const { email, code, newPassword } = request.body;
@@ -286,17 +280,15 @@ const authController = {
                 return response.status(400).json({ message: 'Invalid email or code.' });
             }
 
-            // Validate code and expiry
             if (!user.resetPasswordCode || user.resetPasswordCode !== code || user.resetPasswordExpires < new Date()) {
                 return response.status(400).json({ message: 'Invalid or expired reset code.' });
             }
 
-            // Hash the new password
             const hashedPassword = await bcrypt.hash(newPassword, 10);
 
             user.password = hashedPassword;
-            user.resetPasswordCode = undefined; // Clear the code
-            user.resetPasswordExpires = undefined; // Clear the expiry
+            user.resetPasswordCode = undefined; 
+            user.resetPasswordExpires = undefined; 
             await user.save();
 
             response.status(200).json({ message: 'Password has been reset successfully.' });
